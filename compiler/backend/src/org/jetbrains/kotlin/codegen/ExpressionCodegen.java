@@ -43,6 +43,7 @@ import org.jetbrains.kotlin.config.ApiVersion;
 import org.jetbrains.kotlin.config.JVMAssertionsMode;
 import org.jetbrains.kotlin.config.LanguageFeature;
 import org.jetbrains.kotlin.descriptors.*;
+import org.jetbrains.kotlin.descriptors.impl.AnonymousFunctionDescriptor;
 import org.jetbrains.kotlin.descriptors.impl.LocalVariableDescriptor;
 import org.jetbrains.kotlin.descriptors.impl.SyntheticFieldDescriptor;
 import org.jetbrains.kotlin.descriptors.impl.TypeAliasConstructorDescriptor;
@@ -980,6 +981,10 @@ public class ExpressionCodegen extends KtVisitor<StackValue, StackValue> impleme
                 asmTypeForAnonymousClass(bindingContext, descriptor),
                 declaration.getContainingFile()
         );
+
+        if (descriptor instanceof AnonymousFunctionDescriptor && declaration instanceof KtFunctionLiteral) {
+            recordCallLabelForLambdaArgument((KtFunctionLiteral) declaration, state.getBindingTrace());
+        }
 
         ClosureCodegen coroutineCodegen = CoroutineCodegenForLambda.create(this, descriptor, declaration, cv);
         ClosureContext closureContext = descriptor.isSuspend() ? this.context.intoCoroutineClosure(

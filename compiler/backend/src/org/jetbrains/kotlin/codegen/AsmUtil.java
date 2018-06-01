@@ -16,6 +16,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns;
 import org.jetbrains.kotlin.builtins.PrimitiveType;
 import org.jetbrains.kotlin.codegen.binding.CalculatedClosure;
+import org.jetbrains.kotlin.codegen.binding.CodegenBinding;
 import org.jetbrains.kotlin.codegen.context.CodegenContext;
 import org.jetbrains.kotlin.codegen.intrinsics.HashCode;
 import org.jetbrains.kotlin.codegen.intrinsics.IntrinsicMethods;
@@ -30,16 +31,16 @@ import org.jetbrains.kotlin.metadata.jvm.deserialization.JvmProtoBufUtil;
 import org.jetbrains.kotlin.metadata.jvm.serialization.JvmStringTable;
 import org.jetbrains.kotlin.name.ClassId;
 import org.jetbrains.kotlin.name.FqName;
+import org.jetbrains.kotlin.name.Name;
 import org.jetbrains.kotlin.protobuf.MessageLite;
 import org.jetbrains.kotlin.renderer.DescriptorRenderer;
+import org.jetbrains.kotlin.resolve.BindingContext;
 import org.jetbrains.kotlin.resolve.DescriptorUtils;
 import org.jetbrains.kotlin.resolve.InlineClassesUtilsKt;
 import org.jetbrains.kotlin.resolve.annotations.AnnotationUtilKt;
 import org.jetbrains.kotlin.resolve.checkers.ExpectedActualDeclarationChecker;
 import org.jetbrains.kotlin.resolve.inline.InlineUtil;
-import org.jetbrains.kotlin.resolve.jvm.JvmClassName;
-import org.jetbrains.kotlin.resolve.jvm.JvmPrimitiveType;
-import org.jetbrains.kotlin.resolve.jvm.RuntimeAssertionInfo;
+import org.jetbrains.kotlin.resolve.jvm.*;
 import org.jetbrains.kotlin.resolve.jvm.diagnostics.JvmDeclarationOrigin;
 import org.jetbrains.kotlin.serialization.DescriptorSerializer;
 import org.jetbrains.kotlin.synthetic.SyntheticJavaPropertyDescriptor;
@@ -698,7 +699,29 @@ public class AsmUtil {
         }
     }
 
-    public static void genNotNullAssertionsForParameters(
+    public static String getReceiverParameterName(@NotNull FunctionDescriptor descriptor, @NotNull BindingContext bindingContext) {
+        String labelName = bindingContext.get(CodegenBinding.CALL_LABEL_FOR_LAMBDA_ARGUMENT, descriptor);
+        if (labelName != null) {
+            return "this@" + labelName;
+        }
+
+        if (descriptor instanceof VariableAccessorDescriptor) {
+            VariableAccessorDescriptor accessor = (VariableAccessorDescriptor) descriptor;
+            return getReceiverParameterName(accessor.getCorrespondingVariable().getName());
+        }
+
+        return getReceiverParameterName(descriptor.getName());
+    }
+
+    private static String getReceiverParameterName(@NotNull Name callableName) {
+        if (callableName.isSpecial()) {
+            return RECEIVER_NAME;
+        }
+
+        return "this@" + callableName.asString();
+    }
+
+    static void genNotNullAssertionsForParameters(
             @NotNull InstructionAdapter v,
             @NotNull GenerationState state,
             @NotNull FunctionDescriptor descriptor,
@@ -720,7 +743,8 @@ public class AsmUtil {
             if (descriptor.isOperator()) {
                 ReceiverParameterDescriptor receiverParameter = descriptor.getExtensionReceiverParameter();
                 if (receiverParameter != null) {
-                    genParamAssertion(v, state.getTypeMapper(), frameMap, receiverParameter, "$receiver");
+                    genParamAssertion(v, state.getTypeMapper(), frameMap, receiverParameter,
+                                      getReceiverParameterName(descriptor, state.getBindingContext()));
                 }
             }
             return;
@@ -728,7 +752,8 @@ public class AsmUtil {
 
         ReceiverParameterDescriptor receiverParameter = descriptor.getExtensionReceiverParameter();
         if (receiverParameter != null) {
-            genParamAssertion(v, state.getTypeMapper(), frameMap, receiverParameter, "$receiver");
+            genParamAssertion(v, state.getTypeMapper(), frameMap, receiverParameter,
+                              getReceiverParameterName(descriptor, state.getBindingContext()));
         }
 
         for (ValueParameterDescriptor parameter : descriptor.getValueParameters()) {
