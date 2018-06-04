@@ -18,6 +18,7 @@ package org.jetbrains.kotlin.idea.debugger.evaluate
 
 import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl
+import com.intellij.debugger.jdi.StackFrameProxyImpl
 import com.intellij.openapi.diagnostic.Attachment
 import com.sun.jdi.ClassType
 import com.sun.jdi.InvalidStackFrameException
@@ -52,13 +53,16 @@ class FrameVisitor(val context: EvaluationContextImpl) {
         if (frame == null) return null
 
         try {
-            when (name) {
-                THIS_NAME -> {
-                    val thisValue = findThis(asmType)
-                    if (thisValue != null) {
-                        return thisValue
-                    }
+            when {
+                @Suppress("ConvertToStringTemplate")
+                name.startsWith(THIS_NAME + "@") -> {
+                    findLabeledThis(frame, name, asmType)?.let { return it }
                 }
+
+                name == THIS_NAME -> {
+                    findUnlabeledThis(frame, asmType)?.let { return it }
+                }
+
                 else -> {
                     if (isInsideInlineFunctionBody(frame.visibleVariables())) {
                         val number = numberOfInlinedFunctions(frame.visibleVariables())
@@ -125,8 +129,27 @@ class FrameVisitor(val context: EvaluationContextImpl) {
         throw EvaluateExceptionUtil.createEvaluateException(message)
     }
 
-    private fun findThis(asmType: Type?): Value? {
-        if (isInsideInlineFunctionBody(frame!!.visibleVariables())) {
+    private fun findLabeledThis(frame: StackFrameProxyImpl, name: String, asmType: Type?): Value? {
+        val labeledThisVar = frame.visibleVariables().firstOrNull { it.name() == name }
+        if (labeledThisVar != null) {
+            return frame.getValue(labeledThisVar).asValue()
+        }
+
+        findFrameThis(frame, asmType)?.let { return it }
+
+        findCapturedThis(asmType)?.let { return it }
+
+        return null
+    }
+
+    private fun findUnlabeledThis(frame: StackFrameProxyImpl, asmType: Type?): Value? {
+        frame.visibleVariables()
+            .filter { it.name().startsWith("this@") }
+            .takeIf { it.isNotEmpty() }
+            ?.maxBy { it.variable }
+            ?.let { return frame.getValue(it).asValue() }
+
+        if (isInsideInlineFunctionBody(frame.visibleVariables())) {
             val number = numberOfInlinedFunctions(frame.visibleVariables())
             val inlineFunVar = findLocalVariableForInlineArgument("this_", number, asmType, true)
             if (inlineFunVar != null) {
@@ -134,22 +157,23 @@ class FrameVisitor(val context: EvaluationContextImpl) {
             }
         }
 
-        val thisObject = frame.thisObject()
-        if (thisObject != null) {
-            val eval4jValue = thisObject.asValue()
-            if (isValueOfCorrectType(eval4jValue, asmType, true)) return eval4jValue
-        }
+        findFrameThis(frame, asmType)?.let { return it }
 
-        val receiver = findValue(RECEIVER_NAME, asmType, checkType = true, failIfNotFound = false)
-        if (receiver != null) return receiver
-
-        val this0 = findValue(AsmUtil.CAPTURED_THIS_FIELD, asmType, checkType = true, failIfNotFound = false)
-        if (this0 != null) return this0
+        findCapturedThis(asmType)?.let { return it }
 
         val `$this` = findValue("\$this", asmType, checkType = false, failIfNotFound = false)
         if (`$this` != null) return `$this`
 
         return null
+    }
+
+    private fun findFrameThis(frame: StackFrameProxyImpl, asmType: Type?): Value? {
+        val thisObject = frame.thisObject() ?: return null
+        return thisObject.asValue().takeIf { isValueOfCorrectType(it, asmType, true) }
+    }
+
+    private fun findCapturedThis(asmType: Type?): Value? {
+        return findValue(AsmUtil.CAPTURED_THIS_FIELD, asmType, checkType = true, failIfNotFound = false)
     }
 
     private fun findLocalVariableForLocalFun(name: String, asmType: Type?, checkType: Boolean): Value? {

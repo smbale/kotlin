@@ -600,6 +600,11 @@ public class KotlinEvaluateExpressionTestGenerated extends AbstractKotlinEvaluat
                 runTest("idea/testData/debugger/tinyApp/src/evaluate/singleBreakpoint/frame/frameInlineFunCallInsideInlineFun.kt");
             }
 
+            @TestMetadata("frameInlineFunCallInsideInlineFunKotlinVariables.kt")
+            public void testFrameInlineFunCallInsideInlineFunKotlinVariables() throws Exception {
+                runTest("idea/testData/debugger/tinyApp/src/evaluate/singleBreakpoint/frame/frameInlineFunCallInsideInlineFunKotlinVariables.kt");
+            }
+
             @TestMetadata("frameInnerClass.kt")
             public void testFrameInnerClass() throws Exception {
                 runTest("idea/testData/debugger/tinyApp/src/evaluate/singleBreakpoint/frame/frameInnerClass.kt");

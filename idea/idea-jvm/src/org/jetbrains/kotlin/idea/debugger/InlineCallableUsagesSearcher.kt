@@ -58,7 +58,7 @@ class InlineCallableUsagesSearcher(private val myDebugProcess: DebugProcess) {
                 ReferencesSearch.search(declaration, getScopeForInlineDeclarationUsages(declaration)).forEach {
                     if (!runReadAction { it.isImportUsage() }) {
                         val usage = (it.element as? KtElement)?.let(::getRelevantElement)
-                        if (usage != null && !runReadAction { declaration.isAncestor(usage) }) {
+                        if (usage != null && runReadAction { !declaration.isAncestor(usage) }) {
                             searchResult.add(usage)
                         }
                     }

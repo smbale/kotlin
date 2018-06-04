@@ -282,7 +282,7 @@ class KotlinEvaluator(val codeFragment: KtCodeFragment, val sourcePosition: Sour
                     // Prepare the main class
 
                     val argumentTypes = Type.getArgumentTypes(methodToInvoke.desc)
-                    val args = context.getArgumentsForEval4j(compiledData.parameters, argumentTypes)
+                    val args = context.getArgumentsForEvaluation(compiledData.parameters, argumentTypes)
                             .zip(argumentTypes)
                             .map { (value, type) ->
                                 // Make argument type classes prepared for sure
@@ -310,7 +310,7 @@ class KotlinEvaluator(val codeFragment: KtCodeFragment, val sourcePosition: Sour
                 override fun visitMethod(access: Int, name: String, desc: String, signature: String?, exceptions: Array<out String>?): MethodVisitor? {
                     if (name == GENERATED_FUNCTION_NAME) {
                         val argumentTypes = Type.getArgumentTypes(desc)
-                        val args = context.getArgumentsForEval4j(compiledData.parameters, argumentTypes)
+                        val args = context.getArgumentsForEvaluation(compiledData.parameters, argumentTypes)
 
                         return object : MethodNode(Opcodes.ASM5, access, name, desc, signature, exceptions) {
                             override fun visitEnd() {
@@ -412,22 +412,22 @@ class KotlinEvaluator(val codeFragment: KtCodeFragment, val sourcePosition: Sour
                 val parameters = ParametersDescriptor()
                 val receiver = config.descriptor.receiverParameter
                 if (receiver != null) {
-                    parameters.add(THIS_NAME, receiver.getParameterType(true))
+                    parameters.add(THIS_NAME + "@" + config.descriptor.name, receiver.getParameterType(true))
                 }
 
                 for (param in config.descriptor.parameters) {
-                    val paramName = when {
-                        param.argumentText.contains("@") -> param.argumentText.substringBefore("@")
-                        param.argumentText.startsWith("::") -> param.argumentText.substring(2)
-                        else -> param.argumentText
-                    }
-                    parameters.add(paramName, param.getParameterType(true), valuesForLabels[paramName])
+                    val argument = param.argumentText
+                    val parameterName = if (argument.startsWith("::")) argument.substring(2) else argument
+                    parameters.add(parameterName, param.getParameterType(true), valuesForLabels[parameterName])
                 }
                 parameters
             }
         }
 
-        private fun EvaluationContextImpl.getArgumentsForEval4j(parameters: ParametersDescriptor, parameterTypes: Array<Type>): List<Value> {
+        private fun EvaluationContextImpl.getArgumentsForEvaluation(
+            parameters: ParametersDescriptor,
+            parameterTypes: Array<Type>
+        ): List<Value> {
             val frameVisitor = FrameVisitor(this)
             return parameters.zip(parameterTypes).map {
                 val result = if (it.first.value != null) {
@@ -475,8 +475,11 @@ class KotlinEvaluator(val codeFragment: KtCodeFragment, val sourcePosition: Sour
 
                 val frameVisitor = FrameVisitor(context)
 
+                val extractedFunctionName = extractedFunction.name
+                        ?: error("Extracted function has an empty name: ${extractedFunction.text}")
+
                 extractedFunction.receiverTypeReference?.let {
-                    state.bindingTrace.recordAnonymousType(it, THIS_NAME, frameVisitor)
+                    state.bindingTrace.recordAnonymousType(it, "$THIS_NAME@$extractedFunctionName", frameVisitor)
                 }
 
                 val valueParameters = extractedFunction.valueParameters
