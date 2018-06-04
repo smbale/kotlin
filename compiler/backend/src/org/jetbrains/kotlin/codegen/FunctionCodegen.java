@@ -48,7 +48,6 @@ import org.jetbrains.kotlin.resolve.constants.ConstantValue;
 import org.jetbrains.kotlin.resolve.constants.KClassValue;
 import org.jetbrains.kotlin.resolve.inline.InlineUtil;
 import org.jetbrains.kotlin.resolve.jvm.AsmTypes;
-import org.jetbrains.kotlin.resolve.jvm.JvmBindingContextSlices;
 import org.jetbrains.kotlin.resolve.jvm.RuntimeAssertionInfo;
 import org.jetbrains.kotlin.resolve.jvm.diagnostics.JvmDeclarationOrigin;
 import org.jetbrains.kotlin.resolve.jvm.diagnostics.JvmDeclarationOriginKind;
@@ -858,7 +857,7 @@ public class FunctionCodegen {
                         ? computeParameterName(i, parameter)
                         : nameForDestructuredParameter;
             } else if (kind == JvmMethodParameterKind.RECEIVER) {
-                parameterName = AsmUtil.getReceiverParameterName(functionDescriptor, typeMapper.getBindingContext());
+                parameterName = AsmUtil.getLabeledThisNameForCallable(functionDescriptor, typeMapper.getBindingContext());
             } else {
                 String lowercaseKind = kind.name().toLowerCase();
                 parameterName = needIndexForVar(kind)

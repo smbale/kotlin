@@ -585,8 +585,8 @@ class AnonymousObjectTransformer(
             val parent = parentFieldRemapper.parent as? RegeneratedLambdaFieldRemapper ?:
                          throw AssertionError("Expecting RegeneratedLambdaFieldRemapper, but ${parentFieldRemapper.parent}")
             val ownerType = Type.getObjectType(parent.originalLambdaInternalName)
-            val desc = CapturedParamDesc(ownerType, THIS, ownerType)
-            val recapturedParamInfo = capturedParamBuilder.addCapturedParam(desc, THIS_0/*outer lambda/object*/, false)
+            val desc = CapturedParamDesc(ownerType, AsmUtil.THIS, ownerType)
+            val recapturedParamInfo = capturedParamBuilder.addCapturedParam(desc, AsmUtil.CAPTURED_THIS_FIELD/*outer lambda/object*/, false)
             val composed = StackValue.LOCAL_0
             recapturedParamInfo.remapValue = composed
             allRecapturedParameters.add(desc)
@@ -608,11 +608,10 @@ class AnonymousObjectTransformer(
     }
 
     private fun getNewFieldName(oldName: String, originalField: Boolean): String {
-        if (THIS_0 == oldName) {
+        if (oldName == AsmUtil.CAPTURED_THIS_FIELD) {
             return if (!originalField) {
                 oldName
-            }
-            else {
+            } else {
                 //rename original 'this$0' in declaration site lambda (inside inline function) to use this$0 only for outer lambda/object access on call site
                 addUniqueField(oldName + INLINE_FUN_THIS_0_SUFFIX)
             }

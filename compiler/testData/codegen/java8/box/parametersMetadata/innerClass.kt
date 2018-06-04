@@ -11,7 +11,7 @@ fun box(): String {
     val constructor = clazz.getDeclaredConstructors().single()
     val parameters = constructor.getParameters()
 
-    if (parameters[0].name != "this$0") return "wrong outer name: ${parameters[0].name}"
+    if (parameters[0].name != "\$this") return "wrong outer name: ${parameters[0].name}"
     if (!parameters[0].isImplicit() || parameters[0].isSynthetic()) return "wrong outer flags: ${parameters[0].modifiers}"
 
     return "OK"

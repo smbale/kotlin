@@ -32,7 +32,6 @@ import org.jetbrains.kotlin.resolve.DescriptorFactory
 import org.jetbrains.kotlin.resolve.DescriptorUtils
 import org.jetbrains.kotlin.resolve.PropertyImportedFromObject
 import org.jetbrains.kotlin.resolve.descriptorUtil.getSuperClassNotAny
-import org.jetbrains.kotlin.resolve.jvm.AsmTypes
 import org.jetbrains.kotlin.resolve.jvm.AsmTypes.*
 import org.jetbrains.kotlin.resolve.jvm.diagnostics.JvmDeclarationOrigin
 import org.jetbrains.kotlin.resolve.jvm.jvmSignature.JvmMethodSignature
@@ -73,9 +72,9 @@ class PropertyReferenceCodegen(
     private val wrapperMethod = getWrapperMethodForPropertyReference(target, getFunction.valueParameters.size)
 
     private val closure = bindingContext.get(CodegenBinding.CLOSURE, classDescriptor)!!.apply {
-        assert((captureReceiverType != null) == (receiverType != null)) {
+        assert((capturedReceiverFromOuterContext != null) == (receiverType != null)) {
             "Bound property reference can only be generated with the type of the receiver. " +
-            "Captured type = $captureReceiverType, actual type = $receiverType"
+            "Captured type = $capturedReceiverFromOuterContext, actual type = $receiverType"
         }
     }
 

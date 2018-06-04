@@ -1,0 +1,72 @@
+final class Foo$Bar$bar$1$1 : kotlin/jvm/internal/Lambda, kotlin/jvm/functions/Function0 {
+    final Foo$Bar$bar$1 $this
+
+    void <init>(Foo$Bar$bar$1 p0)
+
+    public java.lang.Object invoke()
+
+    public final void invoke() {
+        Local variables:
+            this: LFoo$Bar$bar$1$1;
+    }
+}
+
+final class Foo$Bar$bar$1 : kotlin/jvm/internal/Lambda, kotlin/jvm/functions/Function0 {
+    final Foo$Bar $this
+
+    void <init>(Foo$Bar p0)
+
+    public java.lang.Object invoke()
+
+    public final void invoke() {
+        Local variables:
+            this: LFoo$Bar$bar$1;
+    }
+}
+
+public final class Foo$Bar : java/lang/Object {
+    final Foo $this
+
+    public void <init>(Foo $outer) {
+        Local variables:
+            this: LFoo$Bar;
+            $outer: LFoo;
+    }
+
+    public final void bar() {
+        Local variables:
+            this: LFoo$Bar;
+    }
+}
+
+final class Foo$foo$1 : kotlin/jvm/internal/Lambda, kotlin/jvm/functions/Function0 {
+    final Foo $this
+
+    void <init>(Foo p0)
+
+    public java.lang.Object invoke()
+
+    public final void invoke() {
+        Local variables:
+            this: LFoo$foo$1;
+    }
+}
+
+public final class Foo : java/lang/Object {
+    public void <init>() {
+        Local variables:
+            this: LFoo;
+    }
+
+    public final void foo() {
+        Local variables:
+            this: LFoo;
+    }
+}
+
+public final class NoinlineClassCaptureKt : java/lang/Object {
+    public final static void block(kotlin.jvm.functions.Function0 block) {
+        Local variables:
+            block: Lkotlin/jvm/functions/Function0;
+    }
+}

@@ -2,6 +2,6 @@
 
 class C {
     inner class <!CONFLICTING_JVM_DECLARATIONS!>D<!> {
-        <!CONFLICTING_JVM_DECLARATIONS!>val `this$0`: C?<!> = null
+        <!CONFLICTING_JVM_DECLARATIONS!>val `$this`: C?<!> = null
     }
 }

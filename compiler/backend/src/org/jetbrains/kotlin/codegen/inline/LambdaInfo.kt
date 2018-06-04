@@ -144,7 +144,7 @@ class DefaultLambda(
                 if (isFunctionReference || isPropertyReference)
                     constructor?.desc?.let { Type.getArgumentTypes(it) }?.singleOrNull()?.let {
                         originalBoundReceiverType = it
-                        listOf(capturedParamDesc(AsmUtil.RECEIVER_NAME, it.boxReceiverForBoundReference()))
+                        listOf(capturedParamDesc(AsmUtil.CAPTURED_RECEIVER_FIELD, it.boxReceiverForBoundReference()))
                     } ?: emptyList()
                 else
                     constructor?.findCapturedFieldAssignmentInstructions()?.map { fieldNode ->
@@ -251,8 +251,9 @@ class PsiExpressionLambda(
 
     override val capturedVars: List<CapturedParamDesc> by lazy {
         arrayListOf<CapturedParamDesc>().apply {
-            if (closure.captureThis != null) {
-                val type = typeMapper.mapType(closure.captureThis!!)
+            val captureThis = closure.capturedOuterClassDescriptor
+            if (captureThis != null) {
+                val type = typeMapper.mapType(captureThis)
                 val descriptor = EnclosedValueDescriptor(
                     AsmUtil.CAPTURED_THIS_FIELD, null,
                     StackValue.field(type, lambdaClassType, AsmUtil.CAPTURED_THIS_FIELD, false, StackValue.LOCAL_0),
@@ -261,13 +262,14 @@ class PsiExpressionLambda(
                 add(getCapturedParamInfo(descriptor))
             }
 
-            if (closure.captureReceiverType != null) {
-                val type = typeMapper.mapType(closure.captureReceiverType!!).let {
+            if (closure.capturedReceiverFromOuterContext != null) {
+                val type = typeMapper.mapType(closure.capturedReceiverFromOuterContext!!).let {
                     if (isBoundCallableReference) it.boxReceiverForBoundReference() else it
                 }
+                val fieldName = closure.getCapturedReceiverLabel(typeMapper.bindingContext)
                 val descriptor = EnclosedValueDescriptor(
-                    AsmUtil.CAPTURED_RECEIVER_FIELD, null,
-                    StackValue.field(type, lambdaClassType, AsmUtil.CAPTURED_RECEIVER_FIELD, false, StackValue.LOCAL_0),
+                    fieldName, null,
+                    StackValue.field(type, lambdaClassType, fieldName, false, StackValue.LOCAL_0),
                     type
                 )
                 add(getCapturedParamInfo(descriptor))

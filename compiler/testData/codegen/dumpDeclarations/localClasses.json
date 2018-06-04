@@ -5,7 +5,7 @@
 		"class": "A$a$B$C",
 		"members": [
 			{"visibility": "public",	"declaration": "constructor C()", "name": "<init>", "desc": "(LA$a$B;)V"},
-			{"name": "this$0", "desc": "LA$a$B;"}
+			{"name": "$this", "desc": "LA$a$B;"}
 		]
 	},
 	{

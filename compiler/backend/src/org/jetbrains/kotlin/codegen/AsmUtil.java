@@ -32,6 +32,7 @@ import org.jetbrains.kotlin.metadata.jvm.serialization.JvmStringTable;
 import org.jetbrains.kotlin.name.ClassId;
 import org.jetbrains.kotlin.name.FqName;
 import org.jetbrains.kotlin.name.Name;
+import org.jetbrains.kotlin.name.SpecialNames;
 import org.jetbrains.kotlin.protobuf.MessageLite;
 import org.jetbrains.kotlin.renderer.DescriptorRenderer;
 import org.jetbrains.kotlin.resolve.BindingContext;
@@ -41,6 +42,7 @@ import org.jetbrains.kotlin.resolve.annotations.AnnotationUtilKt;
 import org.jetbrains.kotlin.resolve.checkers.ExpectedActualDeclarationChecker;
 import org.jetbrains.kotlin.resolve.inline.InlineUtil;
 import org.jetbrains.kotlin.resolve.jvm.*;
+import org.jetbrains.kotlin.resolve.jvm.checkers.DalvikIdentifierUtils;
 import org.jetbrains.kotlin.resolve.jvm.diagnostics.JvmDeclarationOrigin;
 import org.jetbrains.kotlin.serialization.DescriptorSerializer;
 import org.jetbrains.kotlin.synthetic.SyntheticJavaPropertyDescriptor;
@@ -90,10 +92,19 @@ public class AsmUtil {
             .put(JavaVisibilities.PACKAGE_VISIBILITY, NO_FLAG_PACKAGE_PRIVATE)
             .build();
 
+    public static final String THIS = "this";
+
+    public static final String LABELED_THIS = THIS + "@";
+
+    public static final String CAPTURED_THIS_FIELD = getCapturedFieldName(THIS);
+
+    public static final String CAPTURED_LABELED_THIS = getCapturedFieldName(LABELED_THIS);
+
+    // For inlined callable references and anonymous callable extension receivers
+    public static final String CAPTURED_RECEIVER_FIELD = getCapturedFieldName("receiver");
+
+    // For non-inlined callable references ('kotlin.jvm.internal.CallableReference' has a 'receiver' field)
     public static final String BOUND_REFERENCE_RECEIVER = "receiver";
-    public static final String RECEIVER_NAME = "$receiver";
-    public static final String CAPTURED_RECEIVER_FIELD = "receiver$0";
-    public static final String CAPTURED_THIS_FIELD = "this$0";
 
     private static final ImmutableMap<Integer, JvmPrimitiveType> primitiveTypeByAsmSort;
     private static final ImmutableMap<Type, Type> primitiveTypeByBoxedType;
@@ -111,6 +122,57 @@ public class AsmUtil {
     }
 
     private AsmUtil() {
+    }
+
+    public static String getCapturedFieldName(String originalName) {
+        if (originalName.startsWith("$")) {
+            return originalName;
+        }
+
+        return "$" + originalName;
+    }
+
+    public static String getLabeledThisNameForCallable(@NotNull CallableDescriptor descriptor, @NotNull BindingContext bindingContext) {
+        Name callableName = descriptor.getName();
+        if (callableName == SpecialNames.NO_NAME_PROVIDED || callableName == SpecialNames.ANONYMOUS_FUNCTION) {
+            // THIS is already reserved for the instance 'this' parameter
+            return CAPTURED_THIS_FIELD;
+        }
+
+        if (descriptor instanceof FunctionDescriptor) {
+            String labelName = bindingContext.get(CodegenBinding.CALL_LABEL_FOR_LAMBDA_ARGUMENT, (FunctionDescriptor) descriptor);
+            if (labelName != null) {
+                return LABELED_THIS + labelName;
+            }
+
+            if (descriptor instanceof VariableAccessorDescriptor) {
+                VariableAccessorDescriptor accessor = (VariableAccessorDescriptor) descriptor;
+                return getLabeledThisName(accessor.getCorrespondingVariable().getName());
+            }
+        }
+
+        return getLabeledThisName(callableName);
+    }
+
+    private static String getLabeledThisName(@NotNull Name label) {
+        if (label == SpecialNames.NO_NAME_PROVIDED || label == SpecialNames.ANONYMOUS_FUNCTION) {
+            return THIS;
+        }
+
+        return getLabeledThisName(label.asString());
+    }
+
+    private static String getLabeledThisName(@NotNull String callableName) {
+        String label;
+        if (callableName.startsWith("<")) {
+            assert callableName.endsWith(">");
+            label = callableName.substring(1, callableName.length() - 1);
+        } else {
+            label = callableName;
+        }
+
+        assert DalvikIdentifierUtils.isValidDalvikIdentifier(label);
+        return LABELED_THIS + label;
     }
 
     @NotNull
@@ -482,14 +544,15 @@ public class AsmUtil {
     public static void genClosureFields(@NotNull CalculatedClosure closure, ClassBuilder v, KotlinTypeMapper typeMapper) {
         List<Pair<String, Type>> allFields = new ArrayList<>();
 
-        ClassifierDescriptor captureThis = closure.getCaptureThis();
+        ClassifierDescriptor captureThis = closure.getCapturedOuterClassDescriptor();
         if (captureThis != null) {
             allFields.add(Pair.create(CAPTURED_THIS_FIELD, typeMapper.mapType(captureThis)));
         }
 
-        KotlinType captureReceiverType = closure.getCaptureReceiverType();
+        KotlinType captureReceiverType = closure.getCapturedReceiverFromOuterContext();
         if (captureReceiverType != null && !CallableReferenceUtilKt.isForCallableReference(closure)) {
-            allFields.add(Pair.create(CAPTURED_RECEIVER_FIELD, typeMapper.mapType(captureReceiverType)));
+            String fieldName = closure.getCapturedReceiverLabel(typeMapper.getBindingContext());
+            allFields.add(Pair.create(fieldName, typeMapper.mapType(captureReceiverType)));
         }
 
         allFields.addAll(closure.getRecordedFields());
@@ -699,28 +762,6 @@ public class AsmUtil {
         }
     }
 
-    public static String getReceiverParameterName(@NotNull FunctionDescriptor descriptor, @NotNull BindingContext bindingContext) {
-        String labelName = bindingContext.get(CodegenBinding.CALL_LABEL_FOR_LAMBDA_ARGUMENT, descriptor);
-        if (labelName != null) {
-            return "this@" + labelName;
-        }
-
-        if (descriptor instanceof VariableAccessorDescriptor) {
-            VariableAccessorDescriptor accessor = (VariableAccessorDescriptor) descriptor;
-            return getReceiverParameterName(accessor.getCorrespondingVariable().getName());
-        }
-
-        return getReceiverParameterName(descriptor.getName());
-    }
-
-    private static String getReceiverParameterName(@NotNull Name callableName) {
-        if (callableName.isSpecial()) {
-            return RECEIVER_NAME;
-        }
-
-        return "this@" + callableName.asString();
-    }
-
     static void genNotNullAssertionsForParameters(
             @NotNull InstructionAdapter v,
             @NotNull GenerationState state,
@@ -744,7 +785,7 @@ public class AsmUtil {
                 ReceiverParameterDescriptor receiverParameter = descriptor.getExtensionReceiverParameter();
                 if (receiverParameter != null) {
                     genParamAssertion(v, state.getTypeMapper(), frameMap, receiverParameter,
-                                      getReceiverParameterName(descriptor, state.getBindingContext()));
+                                      getLabeledThisNameForCallable(descriptor, state.getBindingContext()));
                 }
             }
             return;
@@ -753,7 +794,7 @@ public class AsmUtil {
         ReceiverParameterDescriptor receiverParameter = descriptor.getExtensionReceiverParameter();
         if (receiverParameter != null) {
             genParamAssertion(v, state.getTypeMapper(), frameMap, receiverParameter,
-                              getReceiverParameterName(descriptor, state.getBindingContext()));
+                              getLabeledThisNameForCallable(descriptor, state.getBindingContext()));
         }
 
         for (ValueParameterDescriptor parameter : descriptor.getValueParameters()) {

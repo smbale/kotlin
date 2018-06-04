@@ -1,9 +1,9 @@
 @kotlin.Metadata
 final class Controller$multipleSuspensions$1 {
+    synthetic final field $this: Controller
     field L$0: java.lang.Object
     synthetic field data: java.lang.Object
     synthetic field exception: java.lang.Throwable
-    synthetic final field this$0: Controller
     inner class Controller$multipleSuspensions$1
     method <init>(p0: Controller, p1: COROUTINES_PACKAGE.Continuation): void
     public final @org.jetbrains.annotations.Nullable method doResume(@org.jetbrains.annotations.Nullable p0: java.lang.Object, @org.jetbrains.annotations.Nullable p1: java.lang.Throwable): java.lang.Object
@@ -13,10 +13,10 @@ final class Controller$multipleSuspensions$1 {
 
 @kotlin.Metadata
 final class Controller$nonTailCall$1 {
+    synthetic final field $this: Controller
     field L$0: java.lang.Object
     synthetic field data: java.lang.Object
     synthetic field exception: java.lang.Throwable
-    synthetic final field this$0: Controller
     inner class Controller$nonTailCall$1
     method <init>(p0: Controller, p1: COROUTINES_PACKAGE.Continuation): void
     public final @org.jetbrains.annotations.Nullable method doResume(@org.jetbrains.annotations.Nullable p0: java.lang.Object, @org.jetbrains.annotations.Nullable p1: java.lang.Throwable): java.lang.Object

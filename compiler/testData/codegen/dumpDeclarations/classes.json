@@ -77,7 +77,7 @@
 		"class": "PublicClass$InnerPublic",
 		"members": [
 			{"visibility": "public",	"declaration": "constructor InnerPublic()", "name": "<init>", "desc": "(LPublicClass;)V"},
-			{"name": "this$0", "desc": "LPublicClass;"}
+			{"name": "$this", "desc": "LPublicClass;"}
 		]
 	},
 	{
@@ -86,7 +86,7 @@
 		"class": "PublicClass$InnerInternal",
 		"members": [
 			{"visibility": "public",	"declaration": "constructor InnerInternal()", "name": "<init>", "desc": "(LPublicClass;)V"},
-			{"name": "this$0", "desc": "LPublicClass;"}
+			{"name": "$this", "desc": "LPublicClass;"}
 		]
 	},
 	{
@@ -95,7 +95,7 @@
 		"class": "PublicClass$InnerProtected",
 		"members": [
 			{"visibility": "public",	"declaration": "constructor InnerProtected()", "name": "<init>", "desc": "(LPublicClass;)V"},
-			{"name": "this$0", "desc": "LPublicClass;"}
+			{"name": "$this", "desc": "LPublicClass;"}
 		]
 	},
 	{
@@ -104,7 +104,7 @@
 		"class": "PublicClass$InnerPrivate",
 		"members": [
 			{"visibility": "public",	"declaration": "constructor InnerPrivate()", "name": "<init>", "desc": "(LPublicClass;)V"},
-			{"name": "this$0", "desc": "LPublicClass;"}
+			{"name": "$this", "desc": "LPublicClass;"}
 		]
 	},
 	{
@@ -261,7 +261,7 @@
 		"class": "PrivateClass$InnerPublic",
 		"members": [
 			{"visibility": "public",	"declaration": "constructor InnerPublic()", "name": "<init>", "desc": "(LPrivateClass;)V"},
-			{"name": "this$0", "desc": "LPrivateClass;"}
+			{"name": "$this", "desc": "LPrivateClass;"}
 		]
 	},
 	{
@@ -270,7 +270,7 @@
 		"class": "PrivateClass$InnerInternal",
 		"members": [
 			{"visibility": "public",	"declaration": "constructor InnerInternal()", "name": "<init>", "desc": "(LPrivateClass;)V"},
-			{"name": "this$0", "desc": "LPrivateClass;"}
+			{"name": "$this", "desc": "LPrivateClass;"}
 		]
 	},
 	{
@@ -279,7 +279,7 @@
 		"class": "PrivateClass$InnerProtected",
 		"members": [
 			{"visibility": "public",	"declaration": "constructor InnerProtected()", "name": "<init>", "desc": "(LPrivateClass;)V"},
-			{"name": "this$0", "desc": "LPrivateClass;"}
+			{"name": "$this", "desc": "LPrivateClass;"}
 		]
 	},
 	{
@@ -288,7 +288,7 @@
 		"class": "PrivateClass$InnerPrivate",
 		"members": [
 			{"visibility": "public",	"declaration": "constructor InnerPrivate()", "name": "<init>", "desc": "(LPrivateClass;)V"},
-			{"name": "this$0", "desc": "LPrivateClass;"}
+			{"name": "$this", "desc": "LPrivateClass;"}
 		]
 	},
 	{
