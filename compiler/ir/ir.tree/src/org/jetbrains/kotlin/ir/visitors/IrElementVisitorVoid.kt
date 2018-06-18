@@ -92,8 +92,8 @@ interface IrElementVisitorVoid : IrElementVisitor<Unit, Nothing?> {
     fun visitSyntheticBody(body: IrSyntheticBody) = visitBody(body)
     override fun visitSyntheticBody(body: IrSyntheticBody, data: Nothing?) = visitSyntheticBody(body)
 
-    fun visitSuspendableExpression(expression: IrSuspendableExpression) = visitExpression(expression)
-    override fun visitSuspendableExpression(expression: IrSuspendableExpression, data: Nothing?) = visitSuspendableExpression(expression)
+    fun visitSuspendableRoot(expression: IrSuspendableRoot) = visitDoWhileLoop(expression)
+    override fun visitSuspendableRoot(expression: IrSuspendableRoot, data: Nothing?) = visitSuspendableRoot(expression)
 
     fun visitSuspensionPoint(expression: IrSuspensionPoint) = visitExpression(expression)
     override fun visitSuspensionPoint(expression: IrSuspensionPoint, data: Nothing?) = visitSuspensionPoint(expression)

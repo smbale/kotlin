@@ -16,6 +16,7 @@ import org.jetbrains.kotlin.ir.types.isUnit
 import org.jetbrains.kotlin.js.backend.ast.*
 import org.jetbrains.kotlin.util.OperatorNameConventions
 
+@Suppress("PARAMETER_NAME_CHANGED_ON_OVERRIDE")
 class IrElementToJsExpressionTransformer : BaseIrElementToJsNodeTransformer<JsExpression, JsGenerationContext> {
 
     override fun visitVararg(expression: IrVararg, context: JsGenerationContext): JsExpression {
@@ -158,7 +159,7 @@ class IrElementToJsExpressionTransformer : BaseIrElementToJsNodeTransformer<JsEx
         val arguments = translateCallArguments(expression, context)
 
         if (dispatchReceiver != null &&
-            dispatchReceiver.type.isFunctionTypeOrSubtype() && symbol.owner.name == OperatorNameConventions.INVOKE
+            dispatchReceiver.type.isFunctionTypeOrSubtype() && symbol.descriptor.name == OperatorNameConventions.INVOKE
         ) {
             return JsInvocation(jsDispatchReceiver!!, arguments)
         }
@@ -183,5 +184,26 @@ class IrElementToJsExpressionTransformer : BaseIrElementToJsNodeTransformer<JsEx
     override fun visitWhen(expression: IrWhen, context: JsGenerationContext): JsExpression {
         // TODO check when w/o else branch and empty when
         return expression.toJsNode(this, context, ::JsConditional)!!
+    }
+
+
+    override fun visitSuspensionPoint(expression: IrSuspensionPoint, context: JsGenerationContext): JsExpression {
+        val currentBlock = context.currentBlock
+        val label = context.coroutineLabel
+
+        val resumeId = context.nextState()
+        val continueId = resumeId + 1
+        val statementTranslator = IrElementToJsStatementTransformer()
+
+//        val resultPoint = expression.result.accept(statementTranslator, context).asBlock()
+//        val resumeResultPoint = expression.resumeResult.accept(statementTranslator, context).asBlock()
+
+//        resultPoint.statements += JsContinue(JsNameRef(label))
+//        resumeResultPoint.statements += JsContinue(JsNameRef(label))
+
+//        context.addResumePoint(resumeId, resultPoint)
+//        context.addResumePoint(continueId, resumeResultPoint)
+
+        return JsIntLiteral(0)
     }
 }

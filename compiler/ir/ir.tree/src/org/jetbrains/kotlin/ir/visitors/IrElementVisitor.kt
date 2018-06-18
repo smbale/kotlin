@@ -47,7 +47,7 @@ interface IrElementVisitor<out R, in D> {
     fun visitBlockBody(body: IrBlockBody, data: D) = visitBody(body, data)
     fun visitSyntheticBody(body: IrSyntheticBody, data: D) = visitBody(body, data)
 
-    fun visitSuspendableExpression(expression: IrSuspendableExpression, data: D) = visitExpression(expression, data)
+    fun visitSuspendableRoot(expression: IrSuspendableRoot, data: D) = visitDoWhileLoop(expression, data)
     fun visitSuspensionPoint(expression: IrSuspensionPoint, data: D) = visitExpression(expression, data)
 
     fun visitExpression(expression: IrExpression, data: D) = visitElement(expression, data)

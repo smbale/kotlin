@@ -136,7 +136,10 @@ class BridgesConstruction(val context: JsIrBackendContext) : ClassLoweringPass {
             irFunction.extensionReceiverParameter?.let {
                 call.extensionReceiver = irCastIfNeeded(irGet(it), delegateTo.extensionReceiverParameter!!.type)
             }
-            irFunction.valueParameters.mapIndexed { i, valueParameter ->
+
+            val toDrop = if (call.descriptor.isSuspend) 1 else 0
+
+            irFunction.valueParameters.dropLast(toDrop).mapIndexed { i, valueParameter ->
                 call.putValueArgument(i, irCastIfNeeded(irGet(valueParameter), delegateTo.valueParameters[i].type))
             }
             +irReturn(call)

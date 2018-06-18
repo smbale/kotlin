@@ -132,6 +132,15 @@ class JsIntrinsicTransformers(backendContext: JsIrBackendContext) {
                 val value = args[2]
                 JsInvocation(JsNameRef(Namer.KPROPERTY_SET, reference), listOf(receiver, value))
             }
+
+            add(intrinsics.jsGetContinuation) { _, context: JsGenerationContext ->
+                context.getContinuation()
+            }
+
+            add(intrinsics.jsCoroutineContext) { _, context: JsGenerationContext ->
+                val continuation = context.getContinuation()
+                JsInvocation(JsNameRef("get_context", continuation))
+            }
         }
     }
 

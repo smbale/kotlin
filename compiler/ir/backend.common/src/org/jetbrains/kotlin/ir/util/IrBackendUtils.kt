@@ -19,6 +19,7 @@ package org.jetbrains.kotlin.ir.util
 import org.jetbrains.kotlin.backend.common.atMostOne
 import org.jetbrains.kotlin.ir.declarations.IrProperty
 import org.jetbrains.kotlin.ir.symbols.IrClassSymbol
+import org.jetbrains.kotlin.ir.symbols.IrFieldSymbol
 import org.jetbrains.kotlin.ir.symbols.IrFunctionSymbol
 import org.jetbrains.kotlin.name.Name
 
@@ -31,3 +32,16 @@ fun IrClassSymbol.getPropertyGetter(name: String): IrFunctionSymbol? =
 
 fun IrClassSymbol.getPropertySetter(name: String): IrFunctionSymbol? =
     this.getPropertyDeclaration(name)?.setter?.symbol
+
+fun IrClassSymbol.getPropertyField(name: String): IrFieldSymbol? =
+    this.getPropertyDeclaration(name)?.backingField?.symbol
+
+//fun IrClassSymbol.getPropertyGetter(name: String): IrFunctionSymbol? =
+//    this.getFunction("<get-$name>")?.symbol
+//
+//fun IrClassSymbol.getPropertySetter(name: String): IrFunctionSymbol? =
+//    this.getFunction("<set-$name>")?.symbol
+//
+//fun IrClassSymbol.getFunction(name: String) =
+//        this.owner.declarations.filterIsInstance<IrFunction>()
+//            .atMostOne { it.descriptor.name.asString() == name }

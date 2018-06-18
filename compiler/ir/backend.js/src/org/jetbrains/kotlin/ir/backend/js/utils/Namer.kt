@@ -6,6 +6,7 @@
 package org.jetbrains.kotlin.ir.backend.js.utils
 
 import org.jetbrains.kotlin.idea.KotlinLanguage
+import org.jetbrains.kotlin.js.backend.ast.JsName
 import org.jetbrains.kotlin.js.backend.ast.JsNameRef
 
 object Namer {
@@ -59,6 +60,8 @@ object Namer {
     val IS_ARRAY_FUN_REF = JsNameRef("isArray", "Array")
     val DEFINE_INLINE_FUNCTION = "defineInlineFunction"
     val DEFAULT_PARAMETER_IMPLEMENTOR_SUFFIX = "\$default"
+
+    val CONTINUATION = JsName("\$cont", false)
 
     val JS_ERROR = JsNameRef("Error")
 
