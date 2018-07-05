@@ -1,4 +1,3 @@
-// IGNORE_BACKEND: JS_IR
 // IGNORE_BACKEND: JVM_IR
 // WITH_RUNTIME
 // WITH_COROUTINES
@@ -28,7 +27,9 @@ fun builder(c: suspend Controller.() -> Unit): String {
 
 fun box(): String {
     val r1 = builder {
-        for (i in 5..6) {
+        var _i = 5
+        while (_i <= 6) {
+            val i = _i++
             suspendHere(i.toString())
         }
     }

@@ -1,4 +1,3 @@
-// IGNORE_BACKEND: JS_IR
 // IGNORE_BACKEND: JVM_IR
 // WITH_RUNTIME
 // WITH_COROUTINES
@@ -25,9 +24,15 @@ fun builder(c: suspend Controller.() -> Unit): String {
 
 fun box(): String {
     var value = builder {
-        outer@for (x in listOf("O", "K")) {
+        var i1 = 0
+        outer@while (i1 < 2) {
+            val x = if (i1 == 0) "O" else "K"
+            i1++
             result += suspendWithResult(x)
-            for (y in listOf("Q", "W")) {
+            var i2 = 0
+            while (i2 < 2) {
+                val y = if (i2 == 0) "Q" else "W"
+                i2++
                 result += suspendWithResult(y)
                 if (y == "W") {
                     break@outer
@@ -39,9 +44,15 @@ fun box(): String {
     if (value != "OQW.") return "fail: break outer loop: $value"
 
     value = builder {
-        for (x in listOf("O", "K")) {
+        var i1 = 0
+        while (i1 < 2) {
+            val x = if (i1 == 0) "O" else "K"
+            i1++
             result += suspendWithResult(x)
-            for (y in listOf("Q", "W")) {
+            var i2 = 0
+            while (i2 < 2) {
+                val y = if (i2 == 0) "Q" else "W"
+                i2++
                 if (y == "W") {
                     break
                 }

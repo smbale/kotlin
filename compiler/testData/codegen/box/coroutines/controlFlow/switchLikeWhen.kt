@@ -26,7 +26,10 @@ fun builder(c: suspend Controller.() -> Unit): String {
 
 fun box(): String {
     var value = builder {
-        for (v in listOf("A", "B", "C")) {
+        var j = 0
+        while (j < 3) {
+            val i = j++
+            val v = if (i == 0) "A" else if (i == 1) "B" else "C"
             when (v) {
                 "A" -> result += "A;"
                 "B" -> result += suspendWithResult(v) + "]"

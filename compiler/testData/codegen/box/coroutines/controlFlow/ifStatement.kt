@@ -1,4 +1,3 @@
-// IGNORE_BACKEND: JS_IR
 // IGNORE_BACKEND: JVM_IR
 // WITH_RUNTIME
 // WITH_COROUTINES
@@ -32,11 +31,13 @@ fun box(): String {
     if (value != "OK") return "fail: suspend as if condition: $value"
 
     value = builder {
-        for (x in listOf(true, false)) {
+        var i = 0
+        while (i < 2) {
+            val x = i == 0
+            ++i
             if (x) {
                 result += suspendWithResult("O")
-            }
-            else {
+            } else {
                 result += "K"
             }
         }
@@ -44,11 +45,13 @@ fun box(): String {
     if (value != "OK") return "fail: suspend in then branch: $value"
 
     value = builder {
-        for (x in listOf(true, false)) {
+        var i = 0
+        while (i < 2) {
+            val x = i == 0
+            ++i
             if (x) {
                 result += "O"
-            }
-            else {
+            } else {
                 result += suspendWithResult("K")
             }
         }
@@ -56,11 +59,13 @@ fun box(): String {
     if (value != "OK") return "fail: suspend in else branch: $value"
 
     value = builder {
-        for (x in listOf(true, false)) {
+        var i = 0
+        while (i < 2) {
+            val x = i == 0
+            ++i
             if (x) {
                 result += suspendWithResult("O")
-            }
-            else {
+            } else {
                 result += suspendWithResult("K")
             }
         }
@@ -68,7 +73,10 @@ fun box(): String {
     if (value != "OK") return "fail: suspend in both branches: $value"
 
     value = builder {
-        for (x in listOf(true, false)) {
+        var i = 0
+        while (i < 2) {
+            val x = i == 0
+            ++i
             if (x) {
                 result += suspendWithResult("O")
             }

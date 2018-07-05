@@ -1,4 +1,3 @@
-// IGNORE_BACKEND: JS_IR
 // IGNORE_BACKEND: JVM_IR
 // WITH_RUNTIME
 // WITH_COROUTINES
@@ -24,7 +23,8 @@ fun builder(c: suspend Controller.() -> Unit) {
 
 fun box(): String {
 
-    for (i in 1..3) {
+    var i = 1
+    while (i++ <= 3) {
         builder {
             if (suspendHere() != "OK") throw RuntimeException("fail 1")
         }
