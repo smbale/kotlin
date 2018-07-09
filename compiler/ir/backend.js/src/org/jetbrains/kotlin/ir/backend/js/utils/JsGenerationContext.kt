@@ -11,23 +11,16 @@ import org.jetbrains.kotlin.ir.expressions.IrLoop
 import org.jetbrains.kotlin.ir.symbols.IrSymbol
 import org.jetbrains.kotlin.js.backend.ast.*
 
-open class JsGenerationContext {
+class JsGenerationContext {
     fun newDeclaration(scope: JsScope, func: IrFunction? = null): JsGenerationContext {
         return JsGenerationContext(this, if (func != null) JsBlock() else JsGlobalBlock(), scope, func)
     }
-
-    fun newSuspendableContext(resumePoints: MutableList<Pair<Int, JsStatement>>) =
-        JsSuspendableGenerationContext(currentScope.declareFreshName("\$coroutine\$"), resumePoints, this)
 
     val currentBlock: JsBlock
     val currentScope: JsScope
     val currentFunction: IrFunction?
     val parent: JsGenerationContext?
     val staticContext: JsStaticContext
-
-    open val coroutineLabel: JsName get() = parent?.run { coroutineLabel } ?: error("Should be inside coroutine scope")
-
-    fun nextState() = staticContext.stateCounter++
 
     private val program: JsProgram
 
@@ -52,25 +45,4 @@ open class JsGenerationContext {
 
     fun getNameForSymbol(symbol: IrSymbol): JsName = staticContext.getNameForSymbol(symbol, this)
     fun getNameForLoop(loop: IrLoop): JsName? = staticContext.getNameForLoop(loop, this)
-
-    open fun addResumePoint(id: Int, point: JsStatement) {
-        parent?.run { addResumePoint(id, point) } ?: error("Should be inside coroutine scope")
-    }
-
-
-}
-
-class JsSuspendableGenerationContext(
-    override val coroutineLabel: JsName,
-    private val resumePoints: MutableList<Pair<Int, JsStatement>>,
-    parent: JsGenerationContext
-) : JsGenerationContext(parent, parent.currentBlock, parent.currentScope, parent.currentFunction) {
-
-    init {
-        staticContext.stateCounter = 0
-    }
-
-    override fun addResumePoint(id: Int, point: JsStatement) {
-        resumePoints += Pair(id, point)
-    }
 }

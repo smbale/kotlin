@@ -99,9 +99,6 @@ abstract class IrElementTransformerVoid : IrElementTransformer<Nothing?> {
     open fun visitSyntheticBody(body: IrSyntheticBody) = visitBody(body)
     override final fun visitSyntheticBody(body: IrSyntheticBody, data: Nothing?) = visitSyntheticBody(body)
 
-    open fun visitSuspendableRoot(expression: IrSuspendableRoot) = visitDoWhileLoop(expression)
-    override final fun visitSuspendableRoot(expression: IrSuspendableRoot, data: Nothing?) = visitSuspendableRoot(expression)
-
     open fun visitSuspensionPoint(expression: IrSuspensionPoint) = visitExpression(expression)
     override final fun visitSuspensionPoint(expression: IrSuspensionPoint, data: Nothing?) = visitSuspensionPoint(expression)
 

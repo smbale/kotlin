@@ -58,7 +58,6 @@ interface IrElementTransformer<in D> : IrElementVisitor<IrElement, D> {
     override fun visitBlockBody(body: IrBlockBody, data: D) = visitBody(body, data)
     override fun visitSyntheticBody(body: IrSyntheticBody, data: D) = visitBody(body, data)
 
-    override fun visitSuspendableRoot(expression: IrSuspendableRoot, data: D) = visitDoWhileLoop(expression, data)
     override fun visitSuspensionPoint(expression: IrSuspensionPoint, data: D) = visitExpression(expression, data)
 
     override fun visitExpression(expression: IrExpression, data: D): IrExpression =

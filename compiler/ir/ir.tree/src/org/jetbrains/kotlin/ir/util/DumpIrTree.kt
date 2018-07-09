@@ -248,12 +248,6 @@ class DumpIrTreeVisitor(out: Appendable) : IrElementVisitor<Unit, String> {
         }
     }
 
-    override fun visitSuspendableRoot(expression: IrSuspendableRoot, data: String) {
-        printer.println("StateVar = ${expression.suspensionPointId.descriptor.name}")
-        printer.println("ResultVar = ${expression.suspensionResult.descriptor.name}")
-        super.visitSuspendableRoot(expression, data)
-    }
-
     override fun visitSuspensionPoint(expression: IrSuspensionPoint, data: String) {
         expression.dumpLabeledElementWith(data) {
             expression.suspendableExpression.accept(this, "EXPRESSION")

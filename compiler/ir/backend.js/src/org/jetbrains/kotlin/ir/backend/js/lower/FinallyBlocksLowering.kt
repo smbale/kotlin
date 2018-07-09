@@ -48,7 +48,6 @@ import org.jetbrains.kotlin.types.typeUtil.isUnit
 
 internal class FinallyBlocksLowering(val context: JsIrBackendContext): FileLoweringPass, IrElementTransformerVoidWithContext() {
 
-    private val symbols get() = context.ir.symbols
     private val throwable = context.throwable
 
     private interface HighLevelJump {

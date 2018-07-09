@@ -46,7 +46,7 @@ open class SuspendableNodesCollector(protected val suspendableNodes: MutableSet<
         if (hasSuspendableChildren) {
             suspendableNodes += element
         }
-        hasSuspendableChildren = hasSuspendableChildren or current
+        hasSuspendableChildren = hasSuspendableChildren || current
     }
 
     override fun visitSuspensionPoint(expression: IrSuspensionPoint) {
@@ -94,7 +94,6 @@ fun collectSuspendableNodes(body: IrBlock, suspendableNodes: MutableSet<IrElemen
 
         return collectSuspendableNodes(newBlock, suspendableNodes, context, function)
     }
-
 
     return body
 }
@@ -150,11 +149,6 @@ class SuspendedTerminatorsCollector(suspendableNodes: MutableSet<IrElement>) : S
     }
 
     override fun visitReturn(expression: IrReturn) {
-        if (tryStack.isNotEmpty() && tryStack.peek() in suspendableNodes) {
-            suspendableNodes.add(expression)
-            hasSuspendableChildren = true
-        }
-
         shouldFinalliesBeLowered = shouldFinalliesBeLowered || tryStack.any { it.finallyExpression != null && it in suspendableNodes }
 
         return super.visitReturn(expression)
@@ -166,12 +160,12 @@ class StateMachineBuilder(
     private val suspendableNodes: MutableSet<IrElement>,
     val context: JsIrBackendContext,
     val function: IrFunctionSymbol,
-    val rootLoop: IrLoop,
-    val exceptionSymbol: IrFieldSymbol,
-    val exStateSymbol: IrFieldSymbol,
-    val stateSymbol: IrFieldSymbol,
-    val thisSymbol: IrValueParameterSymbol,
-    val suspendResult: IrVariableSymbol
+    private val rootLoop: IrLoop,
+    private val exceptionSymbol: IrFieldSymbol,
+    private val exStateSymbol: IrFieldSymbol,
+    private val stateSymbol: IrFieldSymbol,
+    thisSymbol: IrValueParameterSymbol,
+    private val suspendResult: IrVariableSymbol
 ) : IrElementVisitorVoid {
     override fun visitElement(element: IrElement) {
         if (element in suspendableNodes) {
@@ -195,7 +189,7 @@ class StateMachineBuilder(
 
     val entryState = SuspendState(unit)
     val rootExceptionTrap = buildExceptionTrapState()
-    val globalExceptionSymbol = JsSymbolBuilder.buildTempVar(function, exceptionSymbol.owner.type, "e")
+    private val globalExceptionSymbol = JsSymbolBuilder.buildTempVar(function, exceptionSymbol.owner.type, "e")
     val globalCatch = buildGlobalCatch()
 
     fun finalizeStateMachine() {
@@ -537,12 +531,7 @@ class StateMachineBuilder(
 
     override fun visitReturn(expression: IrReturn) {
         expression.acceptChildrenVoid(this)
-
-        if (!expression.value.type.isUnit()) {
-            transformLastExpression { expression.apply { value = it } }
-        } else {
-            addStatement(expression.apply { value = unitValue })
-        }
+        transformLastExpression { expression.apply { value = it } }
     }
 
     override fun visitThrow(expression: IrThrow) {
@@ -682,7 +671,7 @@ class StateMachineBuilder(
         TryState(
             currentState,
             SuspendState(unit),
-            aTry.finallyExpression?.run { FinallyTargets(SuspendState(unit), SuspendState(unit), SuspendState(unit)) }
+            aTry.finallyExpression?.run { FinallyTargets(SuspendState(unit), SuspendState(unit)) }
         )
 
 
@@ -724,7 +713,7 @@ class LiveLocalsTransformer(private val localMap: Map<IrValueSymbol, IrFieldSymb
     }
 }
 
-data class FinallyTargets(val normal: SuspendState, val fromReturn: SuspendState, val fromThrow: SuspendState)
+data class FinallyTargets(val normal: SuspendState, val fromThrow: SuspendState)
 
 class TryState(
     val tryState: SuspendState,

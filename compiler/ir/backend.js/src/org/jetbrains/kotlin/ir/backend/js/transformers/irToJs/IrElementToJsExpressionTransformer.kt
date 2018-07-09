@@ -185,25 +185,4 @@ class IrElementToJsExpressionTransformer : BaseIrElementToJsNodeTransformer<JsEx
         // TODO check when w/o else branch and empty when
         return expression.toJsNode(this, context, ::JsConditional)!!
     }
-
-
-    override fun visitSuspensionPoint(expression: IrSuspensionPoint, context: JsGenerationContext): JsExpression {
-        val currentBlock = context.currentBlock
-        val label = context.coroutineLabel
-
-        val resumeId = context.nextState()
-        val continueId = resumeId + 1
-        val statementTranslator = IrElementToJsStatementTransformer()
-
-//        val resultPoint = expression.result.accept(statementTranslator, context).asBlock()
-//        val resumeResultPoint = expression.resumeResult.accept(statementTranslator, context).asBlock()
-
-//        resultPoint.statements += JsContinue(JsNameRef(label))
-//        resumeResultPoint.statements += JsContinue(JsNameRef(label))
-
-//        context.addResumePoint(resumeId, resultPoint)
-//        context.addResumePoint(continueId, resumeResultPoint)
-
-        return JsIntLiteral(0)
-    }
 }
