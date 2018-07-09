@@ -63,6 +63,7 @@ public fun <T> (suspend () -> T).createCoroutine(
     completion: Continuation<T>
 ): Continuation<Unit> = SafeContinuation(createCoroutineUnchecked(completion), COROUTINE_SUSPENDED)
 
+// TODO: remove this once implemented in stdlib
 inline fun <T, R> T.let(f: (T) -> R) = f(this)
 inline fun <R> run(f: () -> R) = f()
 
@@ -234,68 +235,6 @@ public interface Continuation<in T> {
     public fun resumeWithException(exception: Throwable)
 }
 
-//object EmptyContinuation: Continuation<Unit> {
-//    override public val context = EmptyCoroutineContext()
-//
-//    /**
-//     * Resumes the execution of the corresponding coroutine passing [value] as the return value of the last suspension point.
-//     */
-//    override fun resume(value: Unit) {}
-//
-//    /**
-//     * Resumes the execution of the corresponding coroutine so that the [exception] is re-thrown right after the
-//     * last suspension point.
-//     */
-//    override fun resumeWithException(exception: Throwable) {}
-//}
-
-//@JsName("CoroutineImpl")
-internal abstract class CoroutineImpl(private val completion: Continuation<Any?>) : Continuation<Any?> {
-//    protected var state = 0
-    protected var exceptionState = 0
-//    protected var result: Any? = null
-//    protected var exception: Throwable? = null
-
-    protected var label: Int = 0
-    protected var pendingException: dynamic = null
-    protected var pendingResult: dynamic = null
-//    protected var finallyPath: Array<Int>? = null
-
-    public override val context: CoroutineContext get() = completion?.context
-
-//    val facade: Continuation<Any?> = this
-
-    val facade: Continuation<Any?> get() {
-        return if (context != null) context[ContinuationInterceptor]?.interceptContinuation(this) ?: this
-        else this
-    }
-
-    override fun resume(value: Any?) {
-//        result = value
-        doResumeWrapper(value, null)
-    }
-
-    override fun resumeWithException(exception: Throwable) {
-        label = exceptionState
-        pendingException = exception
-        doResumeWrapper(null, exception)
-    }
-
-    protected fun doResumeWrapper(data: Any?, exception: Throwable?) {
-        processBareContinuationResume(completion) { doResume(data, exception) }
-    }
-
-    protected abstract fun doResume(data: Any?, exception: Throwable?): Any?
-
-    open fun create(completion: Continuation<*>): Continuation<Unit> {
-        throw IllegalStateException("create(Continuation) has not been overridden")
-    }
-
-    open fun create(value: Any?, completion: Continuation<*>): Continuation<Unit> {
-        throw IllegalStateException("create(Any?;Continuation) has not been overridden")
-    }
-}
-
 public class SafeContinuation<in T>
 public constructor(
     private val delegate: Continuation<T>,
@@ -358,7 +297,7 @@ public constructor(
     }
 }
 
-public suspend inline fun <T> suspendCoroutine(crossinline block: (Continuation<T>) -> Unit): T =
+internal suspend inline fun <T> suspendCoroutine(crossinline block: (Continuation<T>) -> Unit): T =
     suspendCoroutineOrReturn { c: Continuation<T> ->
         val safe = SafeContinuation(c)
         block(safe)
@@ -382,10 +321,3 @@ internal inline fun processBareContinuationResume(completion: Continuation<*>, b
         completion.resumeWithException(t)
     }
 }
-
-@SinceKotlin("1.2")
-@Suppress("WRONG_MODIFIER_TARGET")
-public suspend  val coroutineContext: CoroutineContext
-    get() {
-        throw Exception("Implemented as intrinsic")
-    }

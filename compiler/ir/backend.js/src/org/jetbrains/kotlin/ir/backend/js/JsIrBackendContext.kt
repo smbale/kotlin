@@ -20,6 +20,7 @@ import org.jetbrains.kotlin.ir.backend.js.lower.inline.ModuleIndex
 import org.jetbrains.kotlin.ir.backend.js.utils.OperatorNames
 import org.jetbrains.kotlin.ir.declarations.IrClass
 import org.jetbrains.kotlin.ir.declarations.IrFile
+import org.jetbrains.kotlin.ir.declarations.IrFunction
 import org.jetbrains.kotlin.ir.declarations.IrModuleFragment
 import org.jetbrains.kotlin.ir.descriptors.IrBuiltIns
 import org.jetbrains.kotlin.ir.symbols.IrClassSymbol
@@ -52,24 +53,41 @@ class JsIrBackendContext(
     private val internalPackageName = FqName("kotlin.js")
     private val internalPackage = module.getPackage(internalPackageName)
 
-
+    // TODO: replace it with appropriate package name once we migrate to 1.3 coroutines
     private val coroutinePackageNameSrting = "kotlin.coroutines.experimental"
-    private val intrinsicsPackageName = Name.identifier("intrinsics")
+
+    private val INTRINSICS_PACKAGE_NAME = Name.identifier("intrinsics")
     private val COROUTINE_SUSPENDED_NAME = Name.identifier("COROUTINE_SUSPENDED")
     private val COROUTINE_CONTEXT_NAME = Name.identifier("coroutineContext")
     private val COROUTINE_IMPL_NAME = Name.identifier("CoroutineImpl")
+    private val CONTINUATION_NAME = Name.identifier("Continuation")
+
+    // TODO: what is more clear way reference this getter?
+    private val CONTINUATION_CONTEXT_GETTER_NAME = Name.special("<get-context>")
 
     private val coroutinePackageName = FqName(coroutinePackageNameSrting)
-    private val coroutineIntrinsicsPackageName = coroutinePackageName.child(intrinsicsPackageName)
+    private val coroutineIntrinsicsPackageName = coroutinePackageName.child(INTRINSICS_PACKAGE_NAME)
 
     private val coroutinePackage = module.getPackage(coroutinePackageName)
     private val coroutineIntrinsicsPackage = module.getPackage(coroutineIntrinsicsPackageName)
 
     val enumEntryToGetInstanceFunction = mutableMapOf<IrEnumEntrySymbol, IrSimpleFunctionSymbol>()
 
+    val coroutineGetContext: IrFunctionSymbol
+        get() {
+            val continuation = symbolTable.referenceClass(
+                coroutinePackage.memberScope.getContributedClassifier(
+                    CONTINUATION_NAME,
+                    NoLookupLocation.FROM_BACKEND
+                ) as ClassDescriptor
+            )
+            val contextGetter = continuation.owner.declarations.single { it.descriptor.name == CONTINUATION_CONTEXT_GETTER_NAME } as IrFunction
+            return contextGetter.symbol
+        }
+
     val coroutineContextProperty: PropertyDescriptor
         get() {
-            val vars = coroutinePackage.memberScope.getContributedVariables(
+            val vars = internalPackage.memberScope.getContributedVariables(
                 COROUTINE_CONTEXT_NAME,
                 NoLookupLocation.FROM_BACKEND
             )
@@ -80,22 +98,17 @@ class JsIrBackendContext(
 
     private val operatorMap = referenceOperators()
 
-//    val functions = (0..22).map { symbolTable.referenceClass(getClass(FqName("kotlin.Function$it"))) }
     val functions = (0..22).map { symbolTable.referenceClass(builtIns.getFunction(it)) }
 
     val kFunctions by lazy {
         (0..22).map { symbolTable.referenceClass(reflectionTypes.getKFunction(it)) }
     }
 
-//    val suspendFunctions by lazy {
-//        (0..22).map { symbolTable.referenceClass(getClass(FqName("kotlin.SuspendFunction$it"))) }
-//    }
     val suspendFunctions = (0..22).map { symbolTable.referenceClass(builtIns.getSuspendFunction(it)) }
 
+    val originalModuleIndex = ModuleIndex(irModuleFragment)
 
     fun getOperatorByName(name: Name, type: KotlinType) = operatorMap[name]?.get(type)
-
-    val originalModuleIndex = ModuleIndex(irModuleFragment)
 
     override val ir = object : Ir<CommonBackendContext>(this, irModuleFragment) {
         override val symbols = object : Symbols<CommonBackendContext>(this@JsIrBackendContext, symbolTable.lazyWrapper) {
@@ -134,11 +147,7 @@ class JsIrBackendContext(
                 get() = TODO("not implemented")
             override val copyRangeTo: Map<ClassDescriptor, IrSimpleFunctionSymbol>
                 get() = TODO("not implemented")
-            override val coroutineImpl = symbolTable.referenceClass(
-                getClass(
-                    coroutinePackageName.child(COROUTINE_IMPL_NAME)
-                )
-            )
+            override val coroutineImpl = symbolTable.referenceClass(getInternalClass(COROUTINE_IMPL_NAME.identifier))
             override val coroutineSuspendedGetter = symbolTable.referenceSimpleFunction(
                 coroutineIntrinsicsPackage.memberScope.getContributedVariables(COROUTINE_SUSPENDED_NAME, NoLookupLocation.FROM_BACKEND).single().getter!!
             )

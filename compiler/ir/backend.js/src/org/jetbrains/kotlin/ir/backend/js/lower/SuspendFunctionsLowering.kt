@@ -311,7 +311,7 @@ internal class SuspendFunctionsLowering(val context: JsIrBackendContext): FileLo
         private val create1CompletionParameter = create1Function.valueParameters[0]
 
         private val coroutineImplLabelFieldSymbol = coroutineImplSymbol.getPropertyField("label")!!
-        private val coroutineImplResultFieldSymbol = coroutineImplSymbol.getPropertyField("pendingResult")!!
+//        private val coroutineImplResultFieldSymbol = coroutineImplSymbol.getPropertyField("pendingResult")!!
         private val coroutineImplExceptionFieldSymbol = coroutineImplSymbol.getPropertyField("pendingException")!!
         private val coroutineImplExceptionStateFieldSymbol = coroutineImplSymbol.getPropertyField("exceptionState")!!
 
@@ -839,7 +839,7 @@ internal class SuspendFunctionsLowering(val context: JsIrBackendContext): FileLo
                 context,
                 function.symbol,
                 rootLoop,
-                coroutineImplResultFieldSymbol,
+//                coroutineImplResultFieldSymbol,
                 coroutineImplExceptionFieldSymbol,
                 coroutineImplExceptionStateFieldSymbol,
                 coroutineImplLabelFieldSymbol,

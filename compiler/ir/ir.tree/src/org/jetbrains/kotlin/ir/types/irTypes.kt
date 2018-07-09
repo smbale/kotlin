@@ -141,6 +141,7 @@ fun KotlinType.toIrType(): IrType? {
     return IrSimpleTypeImpl(this, symbol, isMarkedNullable, arguments, annotations)
 }
 
+// TODO: this function creates unbound symbol which is the great source of problems
 private fun ClassifierDescriptor.getSymbol(): IrClassifierSymbol = when (this) {
     is ClassDescriptor -> IrClassSymbolImpl(this)
     is TypeParameterDescriptor -> IrTypeParameterSymbolImpl(this)

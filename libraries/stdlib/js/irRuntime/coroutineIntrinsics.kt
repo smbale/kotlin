@@ -5,8 +5,7 @@
 
 package kotlin.coroutines.experimental.intrinsics
 
-import kotlin.coroutines.experimental.Continuation
-import kotlin.coroutines.experimental.CoroutineImpl
+import kotlin.coroutines.experimental.*
 
 @SinceKotlin("1.1")
 @kotlin.internal.InlineOnly
@@ -22,17 +21,14 @@ public suspend inline fun <T> suspendCoroutineOrReturn(crossinline block: (Conti
  */
 @SinceKotlin("1.2")
 public suspend fun <T> suspendCoroutineUninterceptedOrReturn(block: (Continuation<T>) -> Any?): T =
-    js("block(arguments[arguments.length - 1])").unsafeCast<T>()
+    returnIfSuspended<T>(block(getContinuation<T>()))
 
 /**
  * Intercept continuation with [ContinuationInterceptor].
  */
 @SinceKotlin("1.2")
 @kotlin.internal.InlineOnly
-public inline fun <T> Continuation<T>.intercepted(): Continuation<T> {
-    val self = this
-    return js("self_0.get_facade()").unsafeCast<Continuation<T>>()
-}
+public inline fun <T> Continuation<T>.intercepted() = normalizeContinuation<T>(this)
 
 /**
  * This value is used as a return value of [suspendCoroutineOrReturn] `block` argument to state that
@@ -50,7 +46,8 @@ public inline fun <T> (suspend () -> T).startCoroutineUninterceptedOrReturn(
 ): Any? {
     val self_0 = this
     val cmpt_0 = completion
-    return js("self_0.invoke(cmpt_0)").unsafeCast<Any?>()
+    return js("self_0.invoke(cmpt_0)")
+    // TODO: use clean version once  function references is fixed
 //    return (this as Function1<Continuation<T>, Any?>).invoke(completion)
 }
 
@@ -61,7 +58,12 @@ public inline fun <R, T> (suspend R.() -> T).startCoroutineUninterceptedOrReturn
     receiver: R,
     completion: Continuation<T>
 ): Any? {
-    return (this as Function2<R, Continuation<T>, Any?>).invoke(receiver, completion)
+    val self_0 = this
+    val rec_0 = receiver
+    val cmpt_0 = completion
+    return js("self_0.invoke(rec_0, cmpt_0)")
+    // TODO: use clean version once function references is fixed
+//    return (this as Function2<R, Continuation<T>, Any?>).invoke(receiver, completion)
 }
 
 @SinceKotlin("1.1")
@@ -69,12 +71,45 @@ public fun <R, T> (suspend R.() -> T).createCoroutineUnchecked(
     receiver: R,
     completion: Continuation<T>
 ): Continuation<Unit> {
-    return ((this as CoroutineImpl).create(receiver, completion) as CoroutineImpl).facade
+    return if (this !is CoroutineImpl) {
+        buildContinuationByInvokeCall(completion) {
+            @Suppress("UNCHECKED_CAST") (this as Function2<R, Continuation<T>, Any?>).invoke(receiver, completion)
+        }
+    } else {
+        (create(receiver, completion) as CoroutineImpl).facade
+    }
 }
 
 @SinceKotlin("1.1")
 public fun <T> (suspend () -> T).createCoroutineUnchecked(
     completion: Continuation<T>
 ): Continuation<Unit> {
-    return ((this as CoroutineImpl).create(completion) as CoroutineImpl).facade
+    return if (this !is CoroutineImpl) {
+        buildContinuationByInvokeCall(completion) {
+            @Suppress("UNCHECKED_CAST") (this as Function1<Continuation<T>, Any?>).invoke(completion)
+        }
+    } else {
+        (create(completion) as CoroutineImpl).facade
+    }
+}
+
+private inline fun <T> buildContinuationByInvokeCall(
+    completion: Continuation<T>,
+    crossinline block: () -> Any?
+): Continuation<Unit> {
+    val continuation =
+        object : Continuation<Unit> {
+            override val context: CoroutineContext
+                get() = completion.context
+
+            override fun resume(value: Unit) {
+                processBareContinuationResume(completion, block)
+            }
+
+            override fun resumeWithException(exception: Throwable) {
+                completion.resumeWithException(exception)
+            }
+        }
+
+    return interceptContinuationIfNeeded(completion.context, continuation)
 }
