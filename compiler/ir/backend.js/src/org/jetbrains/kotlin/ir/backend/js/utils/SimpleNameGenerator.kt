@@ -94,16 +94,9 @@ class SimpleNameGenerator : NameGenerator {
                     nameDeclarator = context.currentScope::declareFreshName
                 }
                 is CallableDescriptor -> {
-//                    if (descriptor.name.asString() == "resume"){
-//                        nameBuilder.append(descriptor.name.asString())
-//                    } else if (descriptor.name.asString() == "create") {
-//                        nameBuilder.append(descriptor.name.asString())
-//                    }
-//                    else {
-                        nameBuilder.append(descriptor.name.asString())
-                        descriptor.typeParameters.forEach { nameBuilder.append("_${it.name.asString()}") }
-                        descriptor.valueParameters.forEach { nameBuilder.append("_${it.type}") }
-//                    }
+                    nameBuilder.append(descriptor.name.asString())
+                    descriptor.typeParameters.forEach { nameBuilder.append("_${it.name.asString()}") }
+                    descriptor.valueParameters.forEach { nameBuilder.append("_${it.type}") }
                 }
 
             }

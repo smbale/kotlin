@@ -97,25 +97,21 @@ class CallableReferenceLowering(val context: JsIrBackendContext) {
                 super.visitFunction(declaration)
                 declarationsSet += declaration.symbol
             }
-
-//            override fun visitField(declaration: IrField) {
-//                super.visitField(declaration)
-//                declarationsSet += declaration.descriptor
-//            }
         })
 
 
         for (v in collectedReferenceMap.values) {
-//            if (v.descriptor in declarationsSet) {
-                newDeclarations += v.accept(object : IrElementVisitor<List<IrDeclaration>, Nothing?> {
-                    override fun visitElement(element: IrElement, data: Nothing?) = error("Unreachable execution")
-                    override fun visitFunctionReference(expression: IrFunctionReference, data: Nothing?) =
-                        if (expression.symbol in declarationsSet) lowerKFunctionReference(expression.symbol.owner, expression) else emptyList()
+            newDeclarations += v.accept(object : IrElementVisitor<List<IrDeclaration>, Nothing?> {
+                override fun visitElement(element: IrElement, data: Nothing?) = error("Unreachable execution")
+                override fun visitFunctionReference(expression: IrFunctionReference, data: Nothing?) =
+                    if (expression.symbol in declarationsSet) lowerKFunctionReference(expression.symbol.owner, expression) else emptyList()
 
-                    override fun visitPropertyReference(expression: IrPropertyReference, data: Nothing?) =
-                        if (expression.getter in declarationsSet) lowerKPropertyReference(expression.getter!!.owner, expression) else emptyList()
-                }, null)
-//            }
+                override fun visitPropertyReference(expression: IrPropertyReference, data: Nothing?) =
+                    if (expression.getter in declarationsSet) lowerKPropertyReference(
+                        expression.getter!!.owner,
+                        expression
+                    ) else emptyList()
+            }, null)
         }
     }
 

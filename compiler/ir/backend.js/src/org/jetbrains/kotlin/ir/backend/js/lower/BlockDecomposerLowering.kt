@@ -100,54 +100,6 @@ class BlockDecomposerTransformer(context: JsIrBackendContext) : IrElementTransfo
     }
 
     override fun visitElement(element: IrElement) = element.transform(statementTransformer, null)
-//
-//    override fun lower(irDeclarationContainer: IrDeclarationContainer) {
-//        irDeclarationContainer.declarations.transformFlat { declaration ->
-//            when (declaration) {
-//                is IrFunction -> {
-//                    lower(declaration)
-//                    listOf(declaration)
-//                }
-//                is IrField -> lower(declaration, irDeclarationContainer)
-//                else -> listOf(declaration)
-//            }
-//        }
-//    }
-//
-//    fun lower(irFunction: IrFunction) {
-//        function = irFunction
-//        tmpVarCounter = 0
-//        irFunction.body = irFunction.body?.accept(statementTransformer, null) as? IrBody
-//    }
-//
-//    fun lower(irField: IrField, container: IrDeclarationContainer): List<IrDeclaration> {
-//        irField.initializer?.apply {
-//            val initFnSymbol = JsSymbolBuilder.buildSimpleFunction(
-//                (container as IrSymbolOwner).symbol.descriptor,
-//                irField.name.asString() + "\$init\$"
-//            ).initialize(type = expression.type)
-//
-//
-//            val returnStatement = JsIrBuilder.buildReturn(initFnSymbol, expression)
-//            val newBody = IrBlockBodyImpl(expression.startOffset, expression.endOffset).apply {
-//                statements += returnStatement
-//            }
-//
-//            val initFn = JsIrBuilder.buildFunction(initFnSymbol).apply {
-//                body = newBody
-//            }
-//
-//            lower(initFn)
-//
-//            val lastStatement = newBody.statements.last()
-//            if (lastStatement != returnStatement || (lastStatement as IrReturn).value != expression) {
-//                expression = JsIrBuilder.buildCall(initFnSymbol)
-//                return listOf(initFn, irField)
-//            }
-//        }
-//
-//        return listOf(irField)
-//    }
 
     private fun processStatements(statements: MutableList<IrStatement>) {
         statements.transformFlat {

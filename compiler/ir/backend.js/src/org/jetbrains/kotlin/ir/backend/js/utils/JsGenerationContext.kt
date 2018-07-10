@@ -21,7 +21,6 @@ class JsGenerationContext {
     val currentFunction: IrFunction?
     val parent: JsGenerationContext?
     val staticContext: JsStaticContext
-
     private val program: JsProgram
 
     constructor(rootScope: JsRootScope, backendContext: JsIrBackendContext) {
