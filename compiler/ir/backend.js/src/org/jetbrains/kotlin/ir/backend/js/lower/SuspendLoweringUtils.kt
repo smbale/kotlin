@@ -397,6 +397,7 @@ class StateMachineBuilder(
             branches = expression.branches
         }
 
+        val rootState = currentState
         val rootBlock = currentBlock
 
         for (branch in branches) {
@@ -404,30 +405,39 @@ class StateMachineBuilder(
                 branch.condition.acceptVoid(this)
                 val branchBlock = JsIrBuilder.buildComposite(branch.result.type)
                 val elseBlock = JsIrBuilder.buildComposite(expression.type)
-                //  TODO: optimize for else-branch
 
+                val dispatchState = currentState
                 transformLastExpression {
+                    // TODO: make sure elseBlock is added iff it really needs
                     JsIrBuilder.buildIfElse(unit, it, branchBlock, elseBlock)
                 }
 
-                val ifState = currentState
                 currentBlock = branchBlock
                 branch.result.acceptVoid(this)
 
                 if (currentBlock.statements.last() !is IrContinue) {
-                    doDispatch(exitState)
+                    if (currentState !== rootState) {
+                        doDispatch(exitState)
+                    }
                 }
-                if (currentState != ifState) {
-                    currentState = ifState
-                }
+
+                currentState = dispatchState
                 currentBlock = elseBlock
             } else {
                 branch.result.acceptVoid(this)
-                break // when-chain is over
+                if (currentBlock.statements.last() !is IrContinue) {
+                    if (currentState !== rootState) {
+                        doDispatch(exitState)
+                    }
+                }
+                break
             }
         }
 
+        currentState = rootState
+        currentBlock = rootBlock
         doDispatch(exitState)
+
         updateState(exitState)
         if (varSymbol != null) {
             addStatement(JsIrBuilder.buildGetValue(varSymbol))
@@ -567,7 +577,6 @@ class StateMachineBuilder(
 
         tryResult.acceptVoid(this)
 
-
         if (tryState.finallyState != null) {
             doDispatch(tryState.finallyState.normal)
         } else {
@@ -596,24 +605,35 @@ class StateMachineBuilder(
                     if (it.value in suspendableNodes) suspendableNodes += it
                 }
             } else catch.result
+
             if (type is IrDynamicType) {
                 rethrowNeeded = false
-                val block = JsIrBuilder.buildComposite(catchResult.type)
-                currentBlock = block
-                addStatement(irVar)
-                catchResult.acceptVoid(this)
-                tryState.finallyState?.also { doDispatch(it.normal) }
-            } else {
-                val check = buildIsCheck(ex, type)
+
                 val branchBlock = JsIrBuilder.buildComposite(catchResult.type)
-                val elseBlock = JsIrBuilder.buildComposite(catchResult.type)
-                val irIf = JsIrBuilder.buildIfElse(catchResult.type, check, branchBlock, elseBlock)
-                val ifBlock = currentBlock
+
                 currentBlock = branchBlock
+
                 addStatement(irVar)
                 catchResult.acceptVoid(this)
                 val exitDispatch = tryState.finallyState?.run { normal } ?: exitState
                 doDispatch(exitDispatch)
+
+            } else {
+                val check = buildIsCheck(ex, type)
+
+                val branchBlock = JsIrBuilder.buildComposite(catchResult.type)
+
+                val elseBlock = JsIrBuilder.buildComposite(catchResult.type)
+                val irIf = JsIrBuilder.buildIfElse(catchResult.type, check, branchBlock, elseBlock)
+                val ifBlock = currentBlock
+
+                currentBlock = branchBlock
+
+                addStatement(irVar)
+                catchResult.acceptVoid(this)
+                val exitDispatch = tryState.finallyState?.run { normal } ?: exitState
+                doDispatch(exitDispatch)
+
                 currentBlock = ifBlock
                 addStatement(irIf)
                 currentBlock = elseBlock
