@@ -72,7 +72,12 @@ class SuspendState(type: IrType) {
     var id = -1
 }
 
-fun collectSuspendableNodes(body: IrBlock, suspendableNodes: MutableSet<IrElement>, context: JsIrBackendContext, function: IrFunction): IrBlock {
+fun collectSuspendableNodes(
+    body: IrBlock,
+    suspendableNodes: MutableSet<IrElement>,
+    context: JsIrBackendContext,
+    function: IrFunction
+): IrBlock {
 
     // 1st: mark suspendable loops and tries
     body.acceptVoid(SuspendableNodesCollector(suspendableNodes))
@@ -213,8 +218,14 @@ class StateMachineBuilder(
 //        thenBlock.statements += JsIrBuilder.buildSetField(exStateSymbol, thisReceiver, state)
         thenBlock.statements += JsIrBuilder.buildThrow(nothing, JsIrBuilder.buildGetValue(globalExceptionSymbol))
 
+        // TODO: exception table
         elseBlock.statements += JsIrBuilder.buildSetField(stateSymbol, thisReceiver, exceptionState(), unit)
-        elseBlock.statements += JsIrBuilder.buildSetField(exceptionSymbol, thisReceiver, JsIrBuilder.buildGetValue(globalExceptionSymbol), unit)
+        elseBlock.statements += JsIrBuilder.buildSetField(
+            exceptionSymbol,
+            thisReceiver,
+            JsIrBuilder.buildGetValue(globalExceptionSymbol),
+            unit
+        )
 
         return JsIrBuilder.buildCatch(catchVariable, block)
     }
@@ -265,17 +276,14 @@ class StateMachineBuilder(
     private fun transformLastExpression(transformer: (IrExpression) -> IrStatement) {
         val expression = lastExpression()
         val newStatement = transformer(expression)
-        currentBlock.statements.let { if (it.isNotEmpty()) it[it.size - 1] = newStatement else it += newStatement }
+        currentBlock.statements.let { if (it.isNotEmpty()) it[it.lastIndex] = newStatement else it += newStatement }
     }
 
     private fun buildDispatchBlock(target: SuspendState) = JsIrBuilder.buildComposite(unit).also { doDispatchImpl(target, it, true) }
 
-    override fun visitWhileLoop(loop: IrWhileLoop) {
+    private fun transformLoop(loop: IrLoop, transformer: (IrLoop, SuspendState /*head*/, SuspendState /*exit*/) -> Unit) {
 
         if (loop !in suspendableNodes) return addStatement(loop)
-
-        val condition = loop.condition
-        val body = loop.body
 
         newState()
 
@@ -284,50 +292,38 @@ class StateMachineBuilder(
 
         loopMap.put(loop, LoopBounds(loopHeadState, loopExitState))
 
-        condition.acceptVoid(this)
-
-        transformLastExpression {
-            val exitCond = JsIrBuilder.buildCall(booleanNotSymbol).apply { putValueArgument(0, it) }
-            val irBreak = buildDispatchBlock(loopExitState)
-            JsIrBuilder.buildIfElse(unit, exitCond, irBreak)
-        }
-
-        body?.acceptVoid(this)
+        transformer(loop, loopHeadState, loopExitState)
 
         loopMap.remove(loop)
 
-        doDispatch(loopHeadState)
         updateState(loopExitState)
     }
 
-    override fun visitDoWhileLoop(loop: IrDoWhileLoop) {
-
-        if (loop !in suspendableNodes) return addStatement(loop)
-
-        val condition = loop.condition
-        val body = loop.body
-
-        newState()
-
-        val loopHeadState = currentState
-        val loopExitState = SuspendState(unit)
-
-        loopMap.put(loop, LoopBounds(loopHeadState, loopExitState))
-
-        body?.acceptVoid(this)
-
-        condition.acceptVoid(this)
+    override fun visitWhileLoop(loop: IrWhileLoop) = transformLoop(loop) { l, head, exit ->
+        l.condition.acceptVoid(this)
 
         transformLastExpression {
-            val irContinue = buildDispatchBlock(loopHeadState)
+            val exitCond = JsIrBuilder.buildCall(booleanNotSymbol).apply { putValueArgument(0, it) }
+            val irBreak = buildDispatchBlock(exit)
+            JsIrBuilder.buildIfElse(unit, exitCond, irBreak)
+        }
+
+        l.body?.acceptVoid(this)
+
+        doDispatch(head)
+    }
+
+    override fun visitDoWhileLoop(loop: IrDoWhileLoop) = transformLoop(loop) { l, head, exit ->
+        l.body?.acceptVoid(this)
+
+        l.condition.acceptVoid(this)
+
+        transformLastExpression {
+            val irContinue = buildDispatchBlock(head)
             JsIrBuilder.buildIfElse(unit, it, irContinue)
         }
 
-        loopMap.remove(loop)
-
-        doDispatch(loopExitState)
-
-        updateState(loopExitState)
+        doDispatch(exit)
     }
 
 
@@ -347,7 +343,6 @@ class StateMachineBuilder(
 
         addStatement(JsIrBuilder.buildSetVariable(suspendResult, result, unit))
 
-//        val irSaveState = stateSaver()
         val irReturn = JsIrBuilder.buildReturn(function, JsIrBuilder.buildGetValue(suspendResult), nothing)
         val check = JsIrBuilder.buildCall(eqeqeqSymbol).apply {
             putValueArgument(0, JsIrBuilder.buildGetValue(suspendResult))
@@ -516,6 +511,7 @@ class StateMachineBuilder(
         addStatement(expression.run { IrSetFieldImpl(startOffset, endOffset, symbol, receiver, value, unit, origin, superQualifierSymbol) })
     }
 
+    // TODO: should it be lowered before?
     override fun visitStringConcatenation(expression: IrStringConcatenation) {
         assert(expression in suspendableNodes)
 
@@ -527,6 +523,7 @@ class StateMachineBuilder(
 
         addStatement(expression.run { IrStringConcatenationImpl(startOffset, endOffset, type, newArguments.map { it!! }) })
     }
+
     private val unitValue = JsIrBuilder.buildGetObjectValue(unit, context.symbolTable.referenceClass(context.builtIns.unit))
 
     override fun visitReturn(expression: IrReturn) {
@@ -688,7 +685,11 @@ class StateMachineBuilder(
 }
 
 
-class LiveLocalsTransformer(private val localMap: Map<IrValueSymbol, IrFieldSymbol>, private val receiver: IrExpression, private val unitType: IrType):
+class LiveLocalsTransformer(
+    private val localMap: Map<IrValueSymbol, IrFieldSymbol>,
+    private val receiver: IrExpression,
+    private val unitType: IrType
+) :
     IrElementTransformerVoid() {
     override fun visitGetValue(expression: IrGetValue): IrExpression {
         val field = localMap[expression.symbol] ?: return expression
