@@ -1,20 +1,9 @@
 /*
- * Copyright 2010-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2010-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license
+ * that can be found in the license/LICENSE.txt file.
  */
 
-package org.jetbrains.kotlin.ir.backend.js.lower
+package org.jetbrains.kotlin.ir.backend.js.lower.coroutines
 
 import org.jetbrains.kotlin.backend.common.*
 import org.jetbrains.kotlin.backend.common.descriptors.getFunction
@@ -216,7 +205,9 @@ internal class SuspendFunctionsLowering(val context: JsIrBackendContext): FileLo
         return when {
             numberOfSuspendCalls == 0   -> SuspendFunctionKind.NO_SUSPEND_CALLS
             numberOfSuspendCalls == 1
-                    && suspendCallAtEnd -> SuspendFunctionKind.DELEGATING(lastCall!!)
+                    && suspendCallAtEnd -> SuspendFunctionKind.DELEGATING(
+                lastCall!!
+            )
             else                        -> SuspendFunctionKind.NEEDS_STATE_MACHINE
         }
     }
@@ -351,10 +342,10 @@ internal class SuspendFunctionsLowering(val context: JsIrBackendContext): FileLo
                 it.initialize(stub("coroutine class"), stub("coroutine class constructors"), null)
             }
             coroutineClass = IrClassImpl(
-                    startOffset = irFunction.startOffset,
-                    endOffset   = irFunction.endOffset,
-                    origin      = DECLARATION_ORIGIN_COROUTINE_IMPL,
-                    descriptor  = coroutineClassDescriptor
+                startOffset = irFunction.startOffset,
+                endOffset   = irFunction.endOffset,
+                origin      = DECLARATION_ORIGIN_COROUTINE_IMPL,
+                descriptor  = coroutineClassDescriptor
             )
             coroutineClass.parent = irFunction.parent
             coroutineClass.createParameterDeclarations()
@@ -430,10 +421,11 @@ internal class SuspendFunctionsLowering(val context: JsIrBackendContext): FileLo
             setupExceptionState()
 
             return BuiltCoroutine(
-                    coroutineClass       = coroutineClass,
-                    coroutineConstructor = coroutineFactoryConstructorBuilder?.ir
-                            ?: coroutineConstructorBuilder.ir,
-                    doResumeFunction     = doResumeMethodBuilder.ir)
+                coroutineClass = coroutineClass,
+                coroutineConstructor = coroutineFactoryConstructorBuilder?.ir
+                    ?: coroutineConstructorBuilder.ir,
+                doResumeFunction = doResumeMethodBuilder.ir
+            )
         }
 
         private fun createConstructorBuilder()
@@ -477,10 +469,10 @@ internal class SuspendFunctionsLowering(val context: JsIrBackendContext): FileLo
                 val startOffset = irFunction.startOffset
                 val endOffset = irFunction.endOffset
                 return IrConstructorImpl(
-                        startOffset = startOffset,
-                        endOffset   = endOffset,
-                        origin      = DECLARATION_ORIGIN_COROUTINE_IMPL,
-                        symbol      = symbol).apply {
+                    startOffset = startOffset,
+                    endOffset   = endOffset,
+                    origin      = DECLARATION_ORIGIN_COROUTINE_IMPL,
+                    symbol      = symbol).apply {
 
                     returnType  = coroutineClass.defaultType
 
@@ -538,10 +530,10 @@ internal class SuspendFunctionsLowering(val context: JsIrBackendContext): FileLo
                 val startOffset = irFunction.startOffset
                 val endOffset = irFunction.endOffset
                 return IrConstructorImpl(
-                        startOffset = startOffset,
-                        endOffset   = endOffset,
-                        origin      = DECLARATION_ORIGIN_COROUTINE_IMPL,
-                        symbol      = symbol).apply {
+                    startOffset = startOffset,
+                    endOffset   = endOffset,
+                    origin      = DECLARATION_ORIGIN_COROUTINE_IMPL,
+                    symbol      = symbol).apply {
 
                     returnType = coroutineClass.defaultType
 
@@ -610,10 +602,10 @@ internal class SuspendFunctionsLowering(val context: JsIrBackendContext): FileLo
                 val startOffset = irFunction.startOffset
                 val endOffset = irFunction.endOffset
                 return IrFunctionImpl(
-                        startOffset = startOffset,
-                        endOffset   = endOffset,
-                        origin      = DECLARATION_ORIGIN_COROUTINE_IMPL,
-                        symbol      = symbol).apply {
+                    startOffset = startOffset,
+                    endOffset   = endOffset,
+                    origin      = DECLARATION_ORIGIN_COROUTINE_IMPL,
+                    symbol      = symbol).apply {
 
                     returnType  = coroutineClass.defaultType
                     parent = coroutineClass
@@ -690,10 +682,10 @@ internal class SuspendFunctionsLowering(val context: JsIrBackendContext): FileLo
                 val startOffset = irFunction.startOffset
                 val endOffset = irFunction.endOffset
                 return IrFunctionImpl(
-                        startOffset = startOffset,
-                        endOffset   = endOffset,
-                        origin      = DECLARATION_ORIGIN_COROUTINE_IMPL,
-                        symbol      = symbol).apply {
+                    startOffset = startOffset,
+                    endOffset   = endOffset,
+                    origin      = DECLARATION_ORIGIN_COROUTINE_IMPL,
+                    symbol      = symbol).apply {
 
                     returnType  = irFunction.returnType
                     parent = coroutineClass
@@ -725,13 +717,13 @@ internal class SuspendFunctionsLowering(val context: JsIrBackendContext): FileLo
         }
 
         private fun addField(name: Name, type: IrType, isMutable: Boolean): IrField = createField(
-                irFunction.startOffset,
-                irFunction.endOffset,
-                type,
-                name,
-                isMutable,
-                DECLARATION_ORIGIN_COROUTINE_IMPL,
-                coroutineClassDescriptor
+            irFunction.startOffset,
+            irFunction.endOffset,
+            type,
+            name,
+            isMutable,
+            DECLARATION_ORIGIN_COROUTINE_IMPL,
+            coroutineClassDescriptor
         ).also {
             coroutineClass.addChild(it)
         }
@@ -750,10 +742,10 @@ internal class SuspendFunctionsLowering(val context: JsIrBackendContext): FileLo
                 val startOffset = irFunction.startOffset
                 val endOffset = irFunction.endOffset
                 val function = IrFunctionImpl(
-                        startOffset = startOffset,
-                        endOffset   = endOffset,
-                        origin      = DECLARATION_ORIGIN_COROUTINE_IMPL,
-                        symbol      = symbol).apply {
+                    startOffset = startOffset,
+                    endOffset   = endOffset,
+                    origin      = DECLARATION_ORIGIN_COROUTINE_IMPL,
+                    symbol      = symbol).apply {
 
                     returnType  = context.irBuiltIns.anyNType
                     parent = coroutineClass
@@ -791,7 +783,7 @@ internal class SuspendFunctionsLowering(val context: JsIrBackendContext): FileLo
                             startOffset,
                             endOffset,
                             context.irBuiltIns.unitType,
-                            SuspendFunctionsLowering.STATEMENT_ORIGIN_COROUTINE_IMPL,
+                            STATEMENT_ORIGIN_COROUTINE_IMPL,
                             statements
                         )
                     }
@@ -817,7 +809,9 @@ internal class SuspendFunctionsLowering(val context: JsIrBackendContext): FileLo
 
             val unit = context.irBuiltIns.unitType
 
-            val switch = IrWhenImpl(body.startOffset, body.endOffset, unit, COROUTINE_SWITCH)
+            val switch = IrWhenImpl(body.startOffset, body.endOffset, unit,
+                                    COROUTINE_SWITCH
+            )
             val rootTry = IrTryImpl(body.startOffset, body.endOffset, unit).apply {
                 tryResult = switch
             }
@@ -831,7 +825,8 @@ internal class SuspendFunctionsLowering(val context: JsIrBackendContext): FileLo
             )
 
             val suspendableNodes = mutableSetOf<IrElement>()
-            val loweredBody = collectSuspendableNodes(body, suspendableNodes, context, function)
+            val loweredBody =
+                collectSuspendableNodes(body, suspendableNodes, context, function)
             val thisReceiver = (function.dispatchReceiverParameter as IrValueParameter).symbol
 
             val stateMachineBuilder = StateMachineBuilder(
@@ -901,14 +896,21 @@ internal class SuspendFunctionsLowering(val context: JsIrBackendContext): FileLo
                 }
             }
 
-            function.transform(LiveLocalsTransformer(localToPropertyMap, JsIrBuilder.buildGetValue(thisReceiver), unit), null)
+            function.transform(
+                LiveLocalsTransformer(
+                    localToPropertyMap,
+                    JsIrBuilder.buildGetValue(
+                        thisReceiver
+                    ),
+                    unit
+                ), null)
         }
 
         private fun computeLivenessAtSuspensionPoints(body: IrBody): Map<IrCall, List<IrValueDeclaration>> {
             // TODO: data flow analysis.
             // Just save all visible for now.
             val result = mutableMapOf<IrCall, List<IrValueDeclaration>>()
-            body.acceptChildrenVoid(object : SuspendFunctionsLowering.VariablesScopeTracker() {
+            body.acceptChildrenVoid(object : VariablesScopeTracker() {
                 override fun visitCall(expression: IrCall) {
                     if (!expression.descriptor.isSuspend) return super.visitCall(expression)
 

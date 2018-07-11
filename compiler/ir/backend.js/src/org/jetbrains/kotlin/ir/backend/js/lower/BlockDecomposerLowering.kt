@@ -138,7 +138,7 @@ class BlockDecomposerTransformer(context: JsIrBackendContext) : IrElementTransfo
         }
     }
 
-    private open inner class StatementTransformer : IrElementTransformerVoid() {
+    private inner class StatementTransformer : IrElementTransformerVoid() {
         override fun visitBlockBody(body: IrBlockBody) = body.apply { processStatements(statements) }
 
         override fun visitContainerExpression(expression: IrContainerExpression) = expression.apply { processStatements(statements) }

@@ -3,8 +3,9 @@
  * that can be found in the license/LICENSE.txt file.
  */
 
-package org.jetbrains.kotlin.ir.backend.js.lower
+package org.jetbrains.kotlin.ir.backend.js.lower.coroutines
 
+import org.jetbrains.kotlin.backend.common.lower.FinallyBlocksLowering
 import org.jetbrains.kotlin.backend.common.peek
 import org.jetbrains.kotlin.backend.common.pop
 import org.jetbrains.kotlin.backend.common.push
@@ -560,7 +561,8 @@ class StateMachineBuilder(
         val varSymbol = if (!aTry.type.isUnit()) tempVar(aTry.type) else null
 
         if (aTry.finallyExpression != null) {
-            addStatement(JsIrBuilder.buildVar(finallyStateVarSymbol, IrDispatchPoint(exitState), int))
+            addStatement(JsIrBuilder.buildVar(finallyStateVarSymbol,
+                                              IrDispatchPoint(exitState), int))
         }
         if (varSymbol != null) {
             addStatement(JsIrBuilder.buildVar(varSymbol, type = aTry.type))
@@ -655,7 +657,8 @@ class StateMachineBuilder(
             val throwExitState = SuspendState(unit)
             updateState(finallyState.fromThrow)
             tryState.tryState.successors += finallyState.fromThrow
-            addStatement(JsIrBuilder.buildSetVariable(finallyStateVarSymbol, IrDispatchPoint(throwExitState), int))
+            addStatement(JsIrBuilder.buildSetVariable(finallyStateVarSymbol,
+                                                      IrDispatchPoint(throwExitState), int))
             doDispatch(finallyState.normal)
 
             updateState(finallyState.normal)
@@ -678,7 +681,8 @@ class StateMachineBuilder(
     }
 
     private fun setupExceptionState(target: SuspendState) {
-        addStatement(JsIrBuilder.buildSetField(exStateSymbol, thisReceiver, IrDispatchPoint(target), unit))
+        addStatement(JsIrBuilder.buildSetField(exStateSymbol, thisReceiver,
+                                               IrDispatchPoint(target), unit))
     }
 
     private fun exceptionState() = JsIrBuilder.buildGetField(exStateSymbol, thisReceiver)
@@ -688,7 +692,13 @@ class StateMachineBuilder(
         TryState(
             currentState,
             SuspendState(unit),
-            aTry.finallyExpression?.run { FinallyTargets(SuspendState(unit), SuspendState(unit)) }
+            aTry.finallyExpression?.run {
+                FinallyTargets(
+                    SuspendState(
+                        unit
+                    ), SuspendState(unit)
+                )
+            }
         )
 
 
@@ -745,7 +755,8 @@ class TryState(
 
 class DispatchPointTransformer(val action: (SuspendState) -> IrExpression) : IrElementTransformerVoid() {
     override fun visitExpression(expression: IrExpression): IrExpression {
-        val dispatchPoint = expression as? IrDispatchPoint ?: return super.visitExpression(expression)
+        val dispatchPoint = expression as? IrDispatchPoint
+            ?: return super.visitExpression(expression)
         return action(dispatchPoint.target)
     }
 }
