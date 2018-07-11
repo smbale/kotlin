@@ -27,11 +27,14 @@ import org.jetbrains.kotlin.ir.symbols.IrClassSymbol
 import org.jetbrains.kotlin.ir.symbols.IrEnumEntrySymbol
 import org.jetbrains.kotlin.ir.symbols.IrFunctionSymbol
 import org.jetbrains.kotlin.ir.symbols.IrSimpleFunctionSymbol
+import org.jetbrains.kotlin.ir.types.impl.IrDynamicTypeImpl
 import org.jetbrains.kotlin.ir.util.SymbolTable
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.resolve.scopes.MemberScope
 import org.jetbrains.kotlin.types.KotlinType
+import org.jetbrains.kotlin.types.Variance
+import org.jetbrains.kotlin.types.createDynamicType
 
 class JsIrBackendContext(
     val module: ModuleDescriptor,
@@ -106,6 +109,8 @@ class JsIrBackendContext(
 
     val suspendFunctions = (0..22).map { symbolTable.referenceClass(builtIns.getSuspendFunction(it)) }
 
+    val dynamicType = IrDynamicTypeImpl(createDynamicType(builtIns), emptyList(), Variance.INVARIANT)
+
     val originalModuleIndex = ModuleIndex(irModuleFragment)
 
     fun getOperatorByName(name: Name, type: KotlinType) = operatorMap[name]?.get(type)
@@ -155,8 +160,6 @@ class JsIrBackendContext(
 
         override fun shouldGenerateHandlerParameterForDefaultBodyFun() = true
     }
-
-    val throwable = symbolTable.referenceClass(builtIns.throwable)
 
     private fun referenceOperators() = OperatorNames.ALL.map { name ->
         // TODO to replace KotlinType with IrType we need right equals on IrType

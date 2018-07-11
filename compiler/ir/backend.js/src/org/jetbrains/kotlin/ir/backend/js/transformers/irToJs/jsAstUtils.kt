@@ -74,7 +74,13 @@ fun translateCallArguments(expression: IrMemberAccessExpression, context: JsGene
 
 fun JsGenerationContext.getContinuation() = if (currentFunction!!.name.asString() == "doResume") {
     JsThisRef()
-} else JsNameRef(Namer.CONTINUATION)
+} else {
+    if (currentFunction.descriptor.isSuspend) {
+        JsNameRef(Namer.CONTINUATION)
+    } else {
+        getNameForSymbol(currentFunction.valueParameters.last().symbol).makeRef()
+    }
+}
 
 val IrFunction.isStatic: Boolean get() = this.dispatchReceiverParameter == null
 
