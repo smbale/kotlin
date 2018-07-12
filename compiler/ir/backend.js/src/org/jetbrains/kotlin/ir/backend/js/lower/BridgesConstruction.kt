@@ -48,18 +48,21 @@ import org.jetbrains.kotlin.resolve.DescriptorUtils
 //  Example: for given class hierarchy
 //
 //          class C<T>  {
-//            fun foo(t: T) = ...
+//            fun foo(t: T) = ... // bridge
 //          }
 //
 //          class D : C<Int> {
-//            override fun foo(t: Int) = impl
+//            override fun foo(t: Int) = impl // delegate to
+//          }
+//
+//          class E : D {
+//            <fake override> fun foo(t: Int)  // function
 //          }
 //
 //  it adds method D that delegates generic calls to implementation:
 //
-//          class D : C<Int> {
-//            override fun foo(t: Int) = impl
-//            fun foo(t: Any?) = foo(t as Int)  // Constructed bridge
+//          class E : D {
+//            fun foo(t: Any?) = foo(t as Int) // bridgeDescriptorForIrFunction
 //          }
 //
 class BridgesConstruction(val context: JsIrBackendContext) : ClassLoweringPass {
@@ -125,6 +128,8 @@ class BridgesConstruction(val context: JsIrBackendContext) : ClassLoweringPass {
             bridge.descriptor.returnType, bridge.descriptor.modality, function.visibility
         )
 
+        bridgeDescriptorForIrFunction.isSuspend = bridge.descriptor.isSuspend
+
         // TODO: Support offsets for debug info
         val irFunction = IrFunctionImpl(UNDEFINED_OFFSET, UNDEFINED_OFFSET, IrDeclarationOrigin.DEFINED, bridgeDescriptorForIrFunction)
         irFunction.createParameterDeclarations()
@@ -137,7 +142,7 @@ class BridgesConstruction(val context: JsIrBackendContext) : ClassLoweringPass {
                 call.extensionReceiver = irCastIfNeeded(irGet(it), delegateTo.extensionReceiverParameter!!.type)
             }
 
-            val toTake = irFunction.valueParameters.size - if (call.descriptor.isSuspend) 1 else 0
+            val toTake = irFunction.valueParameters.size - if (call.descriptor.isSuspend xor irFunction.descriptor.isSuspend) 1 else 0
 
             irFunction.valueParameters.subList(0, toTake).mapIndexed { i, valueParameter ->
                 call.putValueArgument(i, irCastIfNeeded(irGet(valueParameter), delegateTo.valueParameters[i].type))
