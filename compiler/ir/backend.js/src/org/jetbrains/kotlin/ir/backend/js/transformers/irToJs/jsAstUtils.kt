@@ -51,7 +51,7 @@ fun translateFunction(declaration: IrFunction, name: JsName?, context: JsGenerat
     declaration.extensionReceiverParameter?.let { function.addParameter(functionContext.getNameForSymbol(it.symbol)) }
     functionParams.forEach { function.addParameter(it) }
     if (declaration.descriptor.isSuspend) {
-        function.addParameter(Namer.CONTINUATION)
+        function.addParameter(context.currentScope.declareName(Namer.CONTINUATION))
     }
 
     return function
@@ -68,18 +68,8 @@ fun translateCallArguments(expression: IrMemberAccessExpression, context: JsGene
     }
 
     return if (expression.descriptor.isSuspend) {
-        arguments + context.getContinuation()
+        arguments + context.continuation
     } else arguments
-}
-
-fun JsGenerationContext.getContinuation() = if (currentFunction!!.name.asString() == "doResume") {
-    JsThisRef()
-} else {
-    if (currentFunction.descriptor.isSuspend) {
-        JsNameRef(Namer.CONTINUATION)
-    } else {
-        getNameForSymbol(currentFunction.valueParameters.last().symbol).makeRef()
-    }
 }
 
 val IrFunction.isStatic: Boolean get() = this.dispatchReceiverParameter == null

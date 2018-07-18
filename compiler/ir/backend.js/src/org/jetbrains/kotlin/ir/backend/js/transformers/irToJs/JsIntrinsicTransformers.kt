@@ -134,13 +134,13 @@ class JsIntrinsicTransformers(backendContext: JsIrBackendContext) {
             }
 
             add(intrinsics.jsGetContinuation) { _, context: JsGenerationContext ->
-                context.getContinuation()
+                context.continuation
             }
 
             add(intrinsics.jsCoroutineContext) { _, context: JsGenerationContext ->
                 val contextGetter = backendContext.coroutineGetContext
                 val getterName = context.getNameForSymbol(contextGetter)
-                val continuation = context.getContinuation()
+                val continuation = context.continuation
                 JsInvocation(JsNameRef(getterName, continuation))
             }
         }
