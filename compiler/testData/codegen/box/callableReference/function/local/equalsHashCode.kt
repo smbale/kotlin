@@ -1,5 +1,5 @@
 // IGNORE_BACKEND: JVM_IR
-// IGNORE_BACKEND: JS, NATIVE
+// IGNORE_BACKEND: JS
 
 fun box(): String {
     fun bar() {}

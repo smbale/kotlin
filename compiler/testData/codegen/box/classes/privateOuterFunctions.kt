@@ -1,5 +1,4 @@
 // IGNORE_BACKEND: JVM_IR
-// IGNORE_BACKEND: NATIVE
 class C {
     private fun String.ext() : String = ""
     private fun f() {}
