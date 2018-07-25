@@ -1,5 +1,5 @@
 // IGNORE_BACKEND: JS_IR
-w// KT-16291 Smart cast doesn't work when getting class of instance
+// KT-16291 Smart cast doesn't work when getting class of instance
 
 class Foo(val s: String) {
     override fun equals(other: Any?): Boolean {
