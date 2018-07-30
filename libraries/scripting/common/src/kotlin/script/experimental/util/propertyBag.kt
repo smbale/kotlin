@@ -3,53 +3,45 @@
  * that can be found in the license/LICENSE.txt file.
  */
 
-@file:Suppress("unused")
-
 package kotlin.script.experimental.util
 
 import kotlin.reflect.KProperty
 
-data class TypedKey<T>(val name: String, val defaultValue: T? = null)
+data class PropertyKey<T>(val name: String, val defaultValue: T? = null)
 
-class TypedKeyDelegate<T>(val defaultValue: T? = null) {
-    operator fun getValue(thisRef: Any?, property: KProperty<*>): TypedKey<T> = TypedKey(property.name, defaultValue)
-}
-
-fun <T> typedKey(defaultValue: T? = null) = TypedKeyDelegate(defaultValue)
-
-open class ChainedPropertyBag internal constructor(private val parent: ChainedPropertyBag?, internal val data: Map<TypedKey<*>, Any?>) {
-    constructor(parent: ChainedPropertyBag? = null, pairs: Iterable<Pair<TypedKey<*>, Any?>>) :
-            this(parent, HashMap<TypedKey<*>, Any?>().also { it.putAll(pairs) })
-
-    constructor(pairs: Iterable<Pair<TypedKey<*>, Any?>>) : this(null, pairs)
-    constructor(parent: ChainedPropertyBag, vararg pairs: Pair<TypedKey<*>, Any?>) : this(parent, pairs.asIterable())
-    constructor(vararg pairs: Pair<TypedKey<*>, Any?>) : this(null, pairs.asIterable())
-
-    fun cloneWithNewParent(newParent: ChainedPropertyBag?): ChainedPropertyBag = when {
-        this == newParent -> this
-        newParent == null -> this
-        parent == null -> createOptimized(newParent, data)
-        else -> createOptimized(parent.cloneWithNewParent(newParent), data)
-    }
-
-    inline operator fun <reified T> get(key: TypedKey<T>): T = getRaw(key) as T
-
-    fun <T> getRaw(key: TypedKey<T>): Any? = getOrNullRaw(key) ?: throw IllegalArgumentException("Unknown key $key")
-
-    inline fun <reified T> getOrNull(key: TypedKey<T>): T? = getOrNullRaw(key)?.let { it as T }
-
-    fun <T> getOrNullRaw(key: TypedKey<T>): Any? = data[key] ?: parent?.getOrNullRaw(key) ?: key.defaultValue
-
-    companion object {
-        fun createOptimized(parent: ChainedPropertyBag?, data: Map<TypedKey<*>, Any?>): ChainedPropertyBag = when {
-            parent != null && data.isEmpty() -> parent
-            parent != null && parent.data.isEmpty() -> createOptimized(parent.parent, data)
-            else -> ChainedPropertyBag(parent, data)
-        }
-    }
-}
-
-fun chainPropertyBags(propertyBags: Iterable<ChainedPropertyBag?>): ChainedPropertyBag =
-    propertyBags.fold(ChainedPropertyBag()) { res, next -> if (next == null) res else res.cloneWithNewParent(next) }
-
-fun chainPropertyBags(vararg propertyBags: ChainedPropertyBag?): ChainedPropertyBag = chainPropertyBags(propertyBags.asIterable())
+//open class PropertyBag internal constructor(private val parent: PropertyBag?, internal val data: Map<PropertyKey<*>, Any?>) {
+//    constructor(parent: PropertyBag? = null, pairs: Iterable<Pair<PropertyKey<*>, Any?>>) :
+//            this(parent, HashMap<PropertyKey<*>, Any?>().also { it.putAll(pairs) })
+//
+//    constructor(pairs: Iterable<Pair<PropertyKey<*>, Any?>>) : this(null, pairs)
+//    constructor(parent: PropertyBag, vararg pairs: Pair<PropertyKey<*>, Any?>) : this(parent, pairs.asIterable())
+//    constructor(vararg pairs: Pair<PropertyKey<*>, Any?>) : this(null, pairs.asIterable())
+//
+//    fun cloneWithNewParent(newParent: PropertyBag?): PropertyBag = when {
+//        this == newParent -> this
+//        newParent == null -> this
+//        parent == null -> createOptimized(newParent, data)
+//        else -> createOptimized(parent.cloneWithNewParent(newParent), data)
+//    }
+//
+//    inline operator fun <reified T> get(key: PropertyKey<T>): T = getRaw(key) as T
+//
+//    fun <T> getRaw(key: PropertyKey<T>): Any? = getOrNullRaw(key) ?: throw IllegalArgumentException("Unknown key $key")
+//
+//    inline fun <reified T> getOrNull(key: PropertyKey<T>): T? = getOrNullRaw(key)?.let { it as T }
+//
+//    fun <T> getOrNullRaw(key: PropertyKey<T>): Any? = data[key] ?: parent?.getOrNullRaw(key) ?: key.defaultValue
+//
+//    companion object {
+//        fun createOptimized(parent: PropertyBag?, data: Map<PropertyKey<*>, Any?>): PropertyBag = when {
+//            parent != null && data.isEmpty() -> parent
+//            parent != null && parent.data.isEmpty() -> createOptimized(parent.parent, data)
+//            else -> PropertyBag(parent, data)
+//        }
+//    }
+//}
+//
+//fun chainPropertyBags(propertyBags: Iterable<PropertyBag?>): PropertyBag =
+//    propertyBags.fold(PropertyBag()) { res, next -> if (next == null) res else res.cloneWithNewParent(next) }
+//
+//fun chainPropertyBags(vararg propertyBags: PropertyBag?): PropertyBag = chainPropertyBags(propertyBags.asIterable())
