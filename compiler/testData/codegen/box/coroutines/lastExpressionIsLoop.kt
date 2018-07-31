@@ -27,9 +27,7 @@ fun builder(c: suspend Controller.() -> Unit): String {
 
 fun box(): String {
     val r1 = builder {
-        var _i = 5
-        while (_i <= 6) {
-            val i = _i++
+        for (i in 5..6) {
             suspendHere(i.toString())
         }
     }

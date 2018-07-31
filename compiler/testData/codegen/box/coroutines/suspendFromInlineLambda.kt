@@ -18,9 +18,7 @@ fun builder(c: suspend Controller.() -> Unit) {
 }
 
 inline fun foo(x: (Int) -> Unit) {
-    var _i = 1
-    while (_i <= 2) {
-        val i = _i++
+    for (i in 1..2) {
         x(i)
     }
 }

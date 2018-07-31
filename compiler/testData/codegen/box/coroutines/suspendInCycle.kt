@@ -27,9 +27,7 @@ fun box(): String {
 
     builder {
         result += "-"
-        var  _i = 0
-        while (_i <= 5) {
-            val i = _i++
+        for (i in 0..5) {
             if (i % 2 == 0) {
                 result += suspendHere().toString()
             }

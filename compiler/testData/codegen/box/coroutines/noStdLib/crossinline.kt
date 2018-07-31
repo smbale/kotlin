@@ -32,8 +32,10 @@ inline fun <E> source(crossinline action: suspend Sink<E>.() -> Unit): SourceCro
 }
 
 fun SourceCrossinline.Factory.range(start: Int, count: Int): SourceCrossinline<Int> = source<Int> {
-    for (i in start until (start + count)) {
+    var  i = start
+    while (i < (start + count)) {
         send(i)
+        ++i
     }
 }
 

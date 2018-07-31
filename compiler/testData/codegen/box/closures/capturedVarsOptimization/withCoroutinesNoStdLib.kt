@@ -1,4 +1,3 @@
-// IGNORE_BACKEND: JS_IR
 // IGNORE_BACKEND: JVM_IR
 // WITH_RUNTIME
 // WITH_COROUTINES
@@ -28,7 +27,10 @@ fun box(): String {
     val value = builder {
         var r = ""
 
-        for (x in listOf("O", "$", "K")) {
+        var _i = 0
+        while (_i < 3) {
+            val i = _i++
+            val x = if (i == 0) "O" else if (i == 1) "$" else "K"
             if (x == "$") continue
             run {
                 r += suspendWithResult(x)

@@ -23,8 +23,7 @@ suspend fun baz1(): String {
 suspend fun baz2(): String {
     var x = null
 
-    var i = 1
-    while (i++ <= 3) {
+    for (i in 1..3) {
         x = null
     }
 

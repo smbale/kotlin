@@ -24,9 +24,7 @@ fun box(): String {
 
     builder {
         result += "-"
-        var _i = 0
-        while (_i <= 10000) {
-            val i = _i++
+        for (i in 0..10000) {
             if (i % 2 == 0) {
                 result += suspendHere().toString()
             }
@@ -38,9 +36,7 @@ fun box(): String {
     }
 
     var mustBe = "-"
-    var _i  = 0
-    while (_i <= 10000) {
-        val i = _i++
+    for (i in 0..10000) {
         if (i % 2 == 0) {
             mustBe += "1"
         }

@@ -23,8 +23,7 @@ fun builder(c: suspend Controller.() -> Unit) {
 
 fun box(): String {
 
-    var i = 1
-    while (i++ <= 3) {
+    for (i in 1..3) {
         builder {
             if (suspendHere() != "OK") throw RuntimeException("fail 1")
         }
