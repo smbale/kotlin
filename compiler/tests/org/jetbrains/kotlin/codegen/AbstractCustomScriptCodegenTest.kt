@@ -17,7 +17,6 @@ import org.jetbrains.kotlin.utils.PathUtil
 import org.jetbrains.kotlin.utils.PathUtil.KOTLIN_SCRIPTING_COMMON_JAR
 import org.jetbrains.kotlin.utils.PathUtil.KOTLIN_SCRIPTING_COMPILER_PLUGIN_JAR
 import org.jetbrains.kotlin.utils.PathUtil.KOTLIN_SCRIPTING_JVM_JAR
-import org.jetbrains.kotlin.utils.PathUtil.KOTLIN_SCRIPTING_MISC_JAR
 import org.junit.Assert
 import java.io.File
 import kotlin.script.experimental.annotations.KotlinScript
@@ -58,7 +57,7 @@ abstract class AbstractCustomScriptCodegenTest : CodegenTestCase() {
                     with(PathUtil.kotlinPathsForDistDirectory) {
                         arrayOf(
                             KOTLIN_SCRIPTING_COMPILER_PLUGIN_JAR, KOTLIN_SCRIPTING_COMMON_JAR,
-                            KOTLIN_SCRIPTING_JVM_JAR, KOTLIN_SCRIPTING_MISC_JAR
+                            KOTLIN_SCRIPTING_JVM_JAR
                         ).mapNotNull { File(libPath, it).takeIf { it.exists() } }
                     }
         }
