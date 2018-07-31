@@ -76,12 +76,12 @@ class ReturnableBlockLowering(val context: JsIrBackendContext) : FileLoweringPas
     }
 }
 
-class ReturnableBlockLoweringContext(val containingDeclaration: IrSymbolOwner) {
+private class ReturnableBlockLoweringContext(val containingDeclaration: IrSymbolOwner) {
     var labelCnt = 0
     val returnMap = mutableMapOf<IrReturnableBlockSymbol, (IrReturn) -> IrExpression>()
 }
 
-class ReturnableBlockTransformer(
+private class ReturnableBlockTransformer(
     val context: JsIrBackendContext
 ) : IrElementTransformer<ReturnableBlockLoweringContext> {
 

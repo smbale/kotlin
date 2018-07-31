@@ -20,7 +20,7 @@ public class JsName extends HasMetadata implements Symbol {
   /**
    * @param ident the unmangled ident to use for this name
    */
-  public JsName(@NotNull String ident, boolean temporary) {
+  JsName(@NotNull String ident, boolean temporary) {
     this.ident = ident;
     this.temporary = temporary;
   }

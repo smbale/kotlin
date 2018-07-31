@@ -6,8 +6,9 @@
 package org.jetbrains.kotlin.ir.backend.js
 
 import com.intellij.openapi.project.Project
-import org.jetbrains.kotlin.backend.common.*
+import org.jetbrains.kotlin.backend.common.FileLoweringPass
 import org.jetbrains.kotlin.backend.common.lower.*
+import org.jetbrains.kotlin.backend.common.runOnFilePostfix
 import org.jetbrains.kotlin.config.CompilerConfiguration
 import org.jetbrains.kotlin.config.languageVersionSettings
 import org.jetbrains.kotlin.descriptors.ModuleDescriptor
@@ -15,6 +16,7 @@ import org.jetbrains.kotlin.ir.backend.js.lower.*
 import org.jetbrains.kotlin.ir.backend.js.lower.coroutines.SuspendFunctionsLowering
 import org.jetbrains.kotlin.ir.backend.js.lower.inline.*
 import org.jetbrains.kotlin.ir.backend.js.transformers.irToJs.IrModuleToJsTransformer
+import org.jetbrains.kotlin.ir.declarations.IrFile
 import org.jetbrains.kotlin.ir.declarations.IrModuleFragment
 import org.jetbrains.kotlin.ir.util.ExternalDependenciesGenerator
 import org.jetbrains.kotlin.ir.util.patchDeclarationParents
@@ -83,6 +85,8 @@ private fun JsIrBackendContext.lower(moduleFragment: IrModuleFragment) {
     moduleFragment.files.forEach(DefaultArgumentStubGenerator(this)::runOnFilePostfix)
     moduleFragment.files.forEach(DefaultParameterInjector(this)::runOnFilePostfix)
     moduleFragment.files.forEach(SharedVariablesLowering(this)::runOnFilePostfix)
+    moduleFragment.files.forEach(EnumClassLowering(this)::runOnFilePostfix)
+    moduleFragment.files.forEach(EnumUsageLowering(this)::lower)
 //    EnumClassLowering(this).runOnFilePostfix(file)
 //    EnumUsageLowering(this).lower(file)
     moduleFragment.files.forEach(ReturnableBlockLowering(this)::lower)
@@ -106,6 +110,22 @@ private fun JsIrBackendContext.lower(moduleFragment: IrModuleFragment) {
     moduleFragment.files.forEach(IntrinsicifyCallsLowering(this)::lower)
 }
 
+private fun FileLoweringPass.lower(files: List<IrFile>) = files.forEach { lower(it) }
+
+// TODO find out why duplicates occur
+private fun IrModuleFragment.removeDuplicates(): IrModuleFragment {
+
+    fun <T> MutableList<T>.removeDuplicates() {
+        val tmp = toSet()
+        clear()
+        addAll(tmp)
+    }
+
+    dependencyModules.removeDuplicates()
+    dependencyModules.forEach { it.externalPackageFragments.removeDuplicates() }
+
+    return this
+}
 private fun FileLoweringPass.lower(files: List<IrFile>) = files.forEach { lower(it) }
 private fun DeclarationContainerLoweringPass.runOnFilePostfix(files: List<IrFile>) = files.forEach { runOnFilePostfix(it) }
 private fun BodyLoweringPass.runOnFilePostfix(files: List<IrFile>) = files.forEach { runOnFilePostfix(it) }
