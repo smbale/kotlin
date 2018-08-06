@@ -22,7 +22,7 @@ import org.jetbrains.kotlin.ir.UNDEFINED_OFFSET
 import org.jetbrains.kotlin.ir.declarations.*
 import org.jetbrains.kotlin.ir.declarations.impl.IrFunctionImpl
 import org.jetbrains.kotlin.ir.expressions.*
-import org.jetbrains.kotlin.ir.expressions.impl.IrTypeOperatorCallImpl
+import org.jetbrains.kotlin.ir.expressions.impl.*
 import org.jetbrains.kotlin.ir.symbols.IrFunctionSymbol
 import org.jetbrains.kotlin.ir.symbols.IrSimpleFunctionSymbol
 import org.jetbrains.kotlin.ir.symbols.impl.IrSimpleFunctionSymbolImpl
@@ -106,35 +106,35 @@ private class CompanionObjectJvmStaticLowering(val context: JvmBackendContext) :
     }
 
     private fun createProxyBody(target: IrFunction, proxy: IrFunction, companion: IrClass): IrBody {
-        TODO()
-//        val companionInstanceFieldSymbol = context.descriptorsFactory.getSymbolForObjectInstance(companion.symbol)
-//        val call = IrCallImpl(UNDEFINED_OFFSET, UNDEFINED_OFFSET, target.returnType, target.symbol)
-//
-//        call.dispatchReceiver = IrGetFieldImpl(
-//            UNDEFINED_OFFSET,
-//            UNDEFINED_OFFSET,
-//            companionInstanceFieldSymbol,
-//            companion.defaultType
-//        )
-//        proxy.extensionReceiverParameter?.let { extensionReceiver ->
-//            call.extensionReceiver = IrGetValueImpl(
-//                UNDEFINED_OFFSET,
-//                UNDEFINED_OFFSET,
-//                extensionReceiver.symbol
-//            )
-//        }
-//        proxy.valueParameters.mapIndexed { i, valueParameter ->
-//            call.putValueArgument(
-//                i,
-//                IrGetValueImpl(
-//                    UNDEFINED_OFFSET,
-//                    UNDEFINED_OFFSET,
-//                    valueParameter.symbol
-//                )
-//            )
-//        }
+        val companionInstanceField = context.descriptorsFactory.getSymbolForObjectInstance(companion)
+        val companionInstanceFieldSymbol = companionInstanceField.symbol
+        val call = IrCallImpl(UNDEFINED_OFFSET, UNDEFINED_OFFSET, target.returnType, target.symbol)
 
-//        return IrExpressionBodyImpl(UNDEFINED_OFFSET, UNDEFINED_OFFSET, call)
+        call.dispatchReceiver = IrGetFieldImpl(
+            UNDEFINED_OFFSET,
+            UNDEFINED_OFFSET,
+            companionInstanceFieldSymbol,
+            companion.defaultType
+        )
+        proxy.extensionReceiverParameter?.let { extensionReceiver ->
+            call.extensionReceiver = IrGetValueImpl(
+                UNDEFINED_OFFSET,
+                UNDEFINED_OFFSET,
+                extensionReceiver.symbol
+            )
+        }
+        proxy.valueParameters.mapIndexed { i, valueParameter ->
+            call.putValueArgument(
+                i,
+                IrGetValueImpl(
+                    UNDEFINED_OFFSET,
+                    UNDEFINED_OFFSET,
+                    valueParameter.symbol
+                )
+            )
+        }
+
+        return IrExpressionBodyImpl(UNDEFINED_OFFSET, UNDEFINED_OFFSET, call)
     }
 }
 
@@ -148,9 +148,9 @@ private class SingletonObjectJvmStaticLowering(
 
         irClass.declarations.filter(::isJvmStaticFunction).forEach {
             val jvmStaticFunction = it as IrSimpleFunction
-            val oldDispatchReceiverParemeter = jvmStaticFunction.dispatchReceiverParameter!!
+            val oldDispatchReceiverParameter = jvmStaticFunction.dispatchReceiverParameter!!
             jvmStaticFunction.dispatchReceiverParameter = null
-            modifyBody(jvmStaticFunction, irClass, oldDispatchReceiverParemeter)
+            modifyBody(jvmStaticFunction, irClass, oldDispatchReceiverParameter)
             functionsMadeStatic.add(jvmStaticFunction.symbol)
         }
     }
@@ -166,18 +166,16 @@ private class ReplaceThisByStaticReference(
     val oldThisReceiverParameter: IrValueParameter
 ) : IrElementTransformer<Nothing?> {
     override fun visitGetValue(expression: IrGetValue, data: Nothing?): IrExpression {
-        val irGetValue = expression
-        if (irGetValue.symbol == oldThisReceiverParameter.symbol) {
-            TODO()
-//            val instanceSymbol = context.descriptorsFactory.getSymbolForObjectInstance(irClass.symbol)
-//            return IrGetFieldImpl(
-//                expression.startOffset,
-//                expression.endOffset,
-//                instanceSymbol,
-//                irClass.defaultType
-//            )
+        if (expression.symbol == oldThisReceiverParameter.symbol) {
+            val instanceSymbol = context.descriptorsFactory.getSymbolForObjectInstance(irClass)
+            return IrGetFieldImpl(
+                expression.startOffset,
+                expression.endOffset,
+                instanceSymbol.symbol,
+                irClass.defaultType
+            )
         }
-        return super.visitGetValue(irGetValue, data)
+        return super.visitGetValue(expression, data)
     }
 }
 

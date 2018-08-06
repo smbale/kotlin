@@ -89,15 +89,13 @@ open class WrappedValueParameterDescriptor(
     override fun getType() = owner.type.toKotlinType()
     override fun getName() = owner.name
     override fun declaresDefaultValue() = owner.defaultValue != null
-    override fun getCompileTimeInitializer(): ConstantValue<*>? {
-        TODO("")
-    }
+    override fun getCompileTimeInitializer(): ConstantValue<*>? = null
 
     override fun copy(newOwner: CallableDescriptor, newName: Name, newIndex: Int) = object : WrappedValueParameterDescriptor() {
         override fun getContainingDeclaration() = newOwner as FunctionDescriptor
         override fun getName() = newName
         override val index = newIndex
-    }
+    }.also { it.bind(owner) }
 
 
     override fun getOverriddenDescriptors(): Collection<ValueParameterDescriptor> = emptyList()
@@ -107,6 +105,8 @@ open class WrappedValueParameterDescriptor(
     override fun substitute(substitutor: TypeSubstitutor): ValueParameterDescriptor {
         TODO("")
     }
+
+    override fun getReturnType(): KotlinType? = owner.type.toKotlinType()
 
     override fun <R : Any?, D : Any?> accept(visitor: DeclarationDescriptorVisitor<R, D>?, data: D) =
         visitor!!.visitValueParameterDescriptor(this, data)
@@ -253,13 +253,9 @@ open class WrappedSimpleFunctionDescriptor(
         TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }
 
-    override fun getInitialSignatureDescriptor(): FunctionDescriptor? {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
-    }
+    override fun getInitialSignatureDescriptor() = null
 
-    override fun <V : Any?> getUserData(key: FunctionDescriptor.UserDataKey<V>?): V? {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
-    }
+    override fun <V : Any?> getUserData(key: FunctionDescriptor.UserDataKey<V>?): V? = null
 
     override fun newCopyBuilder(): FunctionDescriptor.CopyBuilder<out SimpleFunctionDescriptor> {
         TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
@@ -304,9 +300,7 @@ open class WrappedClassConstructorDescriptor(
         TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }
 
-    override fun getKind(): CallableMemberDescriptor.Kind {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
-    }
+    override fun getKind() = CallableMemberDescriptor.Kind.SYNTHESIZED
 
     override fun getConstructedClass() = (owner.parent as IrClass).descriptor
 
@@ -314,9 +308,7 @@ open class WrappedClassConstructorDescriptor(
 
     override fun getOverriddenDescriptors(): MutableCollection<out FunctionDescriptor> = mutableListOf()
 
-    override fun getInitialSignatureDescriptor(): FunctionDescriptor? {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
-    }
+    override fun getInitialSignatureDescriptor(): FunctionDescriptor? = null
 
     override fun getVisibility() = owner.visibility
 
@@ -346,9 +338,7 @@ open class WrappedClassConstructorDescriptor(
 
     override fun isSuspend() = false
 
-    override fun <V : Any?> getUserData(key: FunctionDescriptor.UserDataKey<V>?): V? {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
-    }
+    override fun <V : Any?> getUserData(key: FunctionDescriptor.UserDataKey<V>?): V? = null
 
     override fun isExternal() = owner.isExternal
 
@@ -460,8 +450,8 @@ open class WrappedClassDescriptor(
 open class WrappedPropertyDescriptor(
     override val annotations: Annotations = Annotations.EMPTY,
     private val sourceElement: SourceElement = SourceElement.NO_SOURCE
-) : PropertyDescriptor, DescriptorWrapper<IrProperty>() {
-    override fun getModality() = owner.modality
+) : PropertyDescriptor, DescriptorWrapper<IrField>() {
+    override fun getModality() = if (owner.isFinal) Modality.FINAL else Modality.OPEN
 
     override fun setOverriddenDescriptors(overriddenDescriptors: MutableCollection<out CallableMemberDescriptor>) {
         TODO("not implemented")
@@ -501,18 +491,13 @@ open class WrappedPropertyDescriptor(
         TODO("not implemented")
     }
 
-    override fun getAccessors(): MutableList<PropertyAccessorDescriptor> {
-        val result = mutableListOf<PropertyAccessorDescriptor>()
-        owner.getter?.let { result += it.descriptor as PropertyAccessorDescriptor }
-        owner.setter?.let { result += it.descriptor as PropertyAccessorDescriptor }
-        return result
-    }
+    override fun getAccessors(): MutableList<PropertyAccessorDescriptor>  = mutableListOf()
 
     override fun getTypeParameters() = emptyList()
 
     override fun getVisibility() = owner.visibility
 
-    override val setter: PropertySetterDescriptor? get() = owner.setter?.descriptor as PropertySetterDescriptor?
+    override val setter: PropertySetterDescriptor? get() = null
 
     override fun getOriginal() = this
 
@@ -524,25 +509,25 @@ open class WrappedPropertyDescriptor(
 
     override fun isActual() = false
 
-    override fun getReturnType() = owner.getter?.returnType?.toKotlinType() ?: owner.backingField?.type?.toKotlinType()
+    override fun getReturnType() = owner.type.toKotlinType()
 
     override fun hasStableParameterNames(): Boolean {
         TODO("not implemented")
     }
 
-    override fun getType(): KotlinType = owner.getter?.returnType?.toKotlinType() ?: owner.backingField?.type?.toKotlinType()!!
+    override fun getType(): KotlinType = owner.type.toKotlinType()
 
-    override fun isVar() = owner.isVar
+    override fun isVar() = owner.isFinal
 
     override fun getDispatchReceiverParameter(): ReceiverParameterDescriptor? {
         TODO("not implemented")
     }
 
-    override fun isConst() = owner.isConst
+    override fun isConst() = false
 
     override fun getContainingDeclaration() = (owner.parent as IrSymbolOwner).symbol.descriptor
 
-    override fun isLateInit() = owner.isLateinit
+    override fun isLateInit() = false
 
     override fun getExtensionReceiverParameter(): ReceiverParameterDescriptor? {
         TODO("not implemented")
@@ -557,11 +542,11 @@ open class WrappedPropertyDescriptor(
         visitor!!.visitPropertyDescriptor(this, null)
     }
 
-    override val getter: PropertyGetterDescriptor? get() = owner.getter?.descriptor as PropertyGetterDescriptor?
+    override val getter: PropertyGetterDescriptor? get() = null
 
     override fun newCopyBuilder(): CallableMemberDescriptor.CopyBuilder<out PropertyDescriptor> {
         TODO("not implemented")
     }
 
-    override val isDelegated get() = owner.isDelegated
+    override val isDelegated get() = false
 }

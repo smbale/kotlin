@@ -7,9 +7,12 @@ package org.jetbrains.kotlin.backend.common.lower
 
 import org.jetbrains.kotlin.backend.common.ClassLoweringPass
 import org.jetbrains.kotlin.backend.common.CommonBackendContext
-import org.jetbrains.kotlin.backend.common.descriptors.WrappedSimpleFunctionDescriptor
+import org.jetbrains.kotlin.descriptors.CallableMemberDescriptor
 import org.jetbrains.kotlin.descriptors.Modality
+import org.jetbrains.kotlin.descriptors.SourceElement
 import org.jetbrains.kotlin.descriptors.Visibilities
+import org.jetbrains.kotlin.descriptors.annotations.Annotations
+import org.jetbrains.kotlin.descriptors.impl.SimpleFunctionDescriptorImpl
 import org.jetbrains.kotlin.ir.IrElement
 import org.jetbrains.kotlin.ir.IrStatement
 import org.jetbrains.kotlin.ir.UNDEFINED_OFFSET
@@ -22,7 +25,6 @@ import org.jetbrains.kotlin.ir.expressions.impl.IrBlockBodyImpl
 import org.jetbrains.kotlin.ir.expressions.impl.IrBlockImpl
 import org.jetbrains.kotlin.ir.expressions.impl.IrGetValueImpl
 import org.jetbrains.kotlin.ir.expressions.impl.IrSetFieldImpl
-import org.jetbrains.kotlin.ir.symbols.impl.IrSimpleFunctionSymbolImpl
 import org.jetbrains.kotlin.ir.util.deepCopyWithSymbols
 import org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid
 import org.jetbrains.kotlin.ir.visitors.IrElementVisitorVoid
@@ -30,6 +32,7 @@ import org.jetbrains.kotlin.ir.visitors.acceptChildrenVoid
 import org.jetbrains.kotlin.ir.visitors.transformChildrenVoid
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.resolve.DescriptorUtils
+import org.jetbrains.kotlin.resolve.descriptorUtil.builtIns
 import java.util.*
 
 
@@ -97,28 +100,24 @@ class InitializersLowering(
         }
 
         fun createStaticInitializationMethod(irClass: IrClass) {
-            val descriptor = WrappedSimpleFunctionDescriptor()
-            val symbol = IrSimpleFunctionSymbolImpl(descriptor)
-            val function = IrFunctionImpl(
-                irClass.startOffset,
-                irClass.endOffset,
-                declarationOrigin,
-                symbol,
-                clinitName,
-                Visibilities.PUBLIC,
-                Modality.FINAL,
-                false,
-                false,
-                false,
-                false
+            val staticInitializerDescriptor = SimpleFunctionDescriptorImpl.create(
+                irClass.descriptor, Annotations.EMPTY, clinitName,
+                CallableMemberDescriptor.Kind.SYNTHESIZED,
+                SourceElement.NO_SOURCE
             )
-
-            irClass.declarations += function.also { f ->
-                descriptor.bind(f)
-                f.parent = irClass
-                f.returnType = context.irBuiltIns.unitType
-                f.body = IrBlockBodyImpl(irClass.startOffset, irClass.endOffset, staticInitializerStatements.map { it.copy(f) })
-            }
+            staticInitializerDescriptor.initialize(
+                null, null, emptyList(), emptyList(),
+                irClass.descriptor.builtIns.unitType,
+                Modality.FINAL, Visibilities.PUBLIC
+            )
+            irClass.declarations.add(
+                IrFunctionImpl(
+                    irClass.startOffset, irClass.endOffset, declarationOrigin,
+                    staticInitializerDescriptor,
+                    IrBlockBodyImpl(irClass.startOffset, irClass.endOffset,
+                                    staticInitializerStatements.map { it.copy(irClass) })
+                )
+            )
         }
     }
 

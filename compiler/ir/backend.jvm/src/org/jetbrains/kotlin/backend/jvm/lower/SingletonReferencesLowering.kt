@@ -11,6 +11,7 @@ import org.jetbrains.kotlin.ir.expressions.IrBody
 import org.jetbrains.kotlin.ir.expressions.IrExpression
 import org.jetbrains.kotlin.ir.expressions.IrGetEnumValue
 import org.jetbrains.kotlin.ir.expressions.IrGetObjectValue
+import org.jetbrains.kotlin.ir.expressions.impl.IrGetFieldImpl
 import org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid
 import org.jetbrains.kotlin.ir.visitors.transformChildrenVoid
 
@@ -20,14 +21,12 @@ class SingletonReferencesLowering(val context: JvmBackendContext) : BodyLowering
     }
 
     override fun visitGetEnumValue(expression: IrGetEnumValue): IrExpression {
-        TODO()
-//        val entrySymbol = context.descriptorsFactory.getSymbolForEnumEntry(expression.symbol)
-//        return IrGetFieldImpl(expression.startOffset, expression.endOffset, entrySymbol, expression.type)
+        val entrySymbol = context.descriptorsFactory.getSymbolForEnumEntry(expression.symbol.owner)
+        return IrGetFieldImpl(expression.startOffset, expression.endOffset, entrySymbol.symbol, expression.type)
     }
 
     override fun visitGetObjectValue(expression: IrGetObjectValue): IrExpression {
-        TODO()
-//        val instanceField = context.descriptorsFactory.getSymbolForObjectInstance(expression.symbol)
-//        return IrGetFieldImpl(expression.startOffset, expression.endOffset, instanceField, expression.type)
+        val instanceField = context.descriptorsFactory.getSymbolForObjectInstance(expression.symbol.owner)
+        return IrGetFieldImpl(expression.startOffset, expression.endOffset, instanceField.symbol, expression.type)
     }
 }

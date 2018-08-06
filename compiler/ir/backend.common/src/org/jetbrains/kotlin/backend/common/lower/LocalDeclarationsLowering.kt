@@ -118,10 +118,10 @@ class LocalDeclarationsLowering(val context: BackendContext, val localNameProvid
     private class LocalClassContext(val declaration: IrClass) : LocalContext() {
         lateinit var closure: Closure
 
-        val capturedValueToField: MutableMap<IrValueDeclaration, Pair<IrProperty, IrField>> = HashMap()
+        val capturedValueToField: MutableMap<IrValueDeclaration, IrField> = HashMap()
 
         override fun irGet(startOffset: Int, endOffset: Int, valueDeclaration: IrValueDeclaration): IrExpression? {
-            val field = capturedValueToField[valueDeclaration]?.second ?: return null
+            val field = capturedValueToField[valueDeclaration] ?: return null
 
             val receiver = declaration.thisReceiver!!
             return IrGetFieldImpl(
@@ -133,7 +133,7 @@ class LocalDeclarationsLowering(val context: BackendContext, val localNameProvid
 
     private class LocalClassMemberContext(val member: IrFunction, val classContext: LocalClassContext) : LocalContext() {
         override fun irGet(startOffset: Int, endOffset: Int, valueDeclaration: IrValueDeclaration): IrExpression? {
-            val field = classContext.capturedValueToField[valueDeclaration]?.second ?: return null
+            val field = classContext.capturedValueToField[valueDeclaration] ?: return null
 
             val receiver = member.dispatchReceiverParameter!!
             return IrGetFieldImpl(
@@ -374,10 +374,10 @@ class LocalDeclarationsLowering(val context: BackendContext, val localNameProvid
 
             assert(constructorsCallingSuper.any()) { "Expected at least one constructor calling super; class: $irClass" }
 
-            localClassContext.capturedValueToField.forEach { capturedValue, (property, field) ->
+            localClassContext.capturedValueToField.forEach { capturedValue, field ->
                 val startOffset = irClass.startOffset
                 val endOffset = irClass.endOffset
-                irClass.declarations.add(property)
+                irClass.declarations.add(field)
 
                 for (constructorContext in constructorsCallingSuper) {
                     val blockBody = constructorContext.declaration.body as? IrBlockBody
@@ -660,38 +660,22 @@ class LocalDeclarationsLowering(val context: BackendContext, val localNameProvid
             visibility: Visibility,
             parent: IrClass,
             fieldType: IrType
-        ): IrProperty {
+        ): IrField {
             val descriptor = WrappedPropertyDescriptor()
             val symbol = IrFieldSymbolImpl(descriptor)
-
-            return IrPropertyImpl(
+            return IrFieldImpl(
                 startOffset,
                 endOffset,
                 DECLARATION_ORIGIN_FIELD_FOR_CAPTURED_VALUE,
-                descriptor,
+                symbol,
                 name,
+                fieldType,
                 visibility,
-                Modality.FINAL,
-                false,
-                false,
-                false,
-                false,
+                true,
                 false
             ).also {
                 descriptor.bind(it)
                 it.parent = parent
-                it.backingField = IrFieldImpl(
-                    startOffset,
-                    endOffset,
-                    DECLARATION_ORIGIN_FIELD_FOR_CAPTURED_VALUE,
-                    symbol,
-                    name,
-                    fieldType,
-                    visibility,
-                    true,
-                    false
-                )
-                it.backingField?.parent = parent
             }
         }
 
@@ -700,7 +684,7 @@ class LocalDeclarationsLowering(val context: BackendContext, val localNameProvid
 
             localClassContext.closure.capturedValues.forEach { capturedValue ->
 
-                val irProperty = createPropertyWithBackingField(
+                val irField = createPropertyWithBackingField(
                     classDeclaration.startOffset,
                     classDeclaration.endOffset,
                     suggestNameForCapturedValue(capturedValue.owner),
@@ -709,7 +693,7 @@ class LocalDeclarationsLowering(val context: BackendContext, val localNameProvid
                     capturedValue.owner.type
                 )
 
-                localClassContext.capturedValueToField[capturedValue.owner] = Pair(irProperty, irProperty.backingField!!)
+                localClassContext.capturedValueToField[capturedValue.owner] = irField
             }
         }
 

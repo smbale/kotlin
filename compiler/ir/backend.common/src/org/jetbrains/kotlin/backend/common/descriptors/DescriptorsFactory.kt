@@ -10,8 +10,8 @@ import org.jetbrains.kotlin.ir.declarations.*
 interface DescriptorsFactory {
     object FIELD_FOR_OUTER_THIS : IrDeclarationOriginImpl("FIELD_FOR_OUTER_THIS")
 
-    fun getSymbolForEnumEntry(enumEntry: IrEnumEntry): IrProperty
-    fun getOuterThisFieldSymbol(innerClass: IrClass): IrProperty
+    fun getSymbolForEnumEntry(enumEntry: IrEnumEntry): IrField
+    fun getOuterThisFieldSymbol(innerClass: IrClass): IrField
     fun getInnerClassConstructorWithOuterThisParameter(innerClassConstructor: IrConstructor): IrConstructor
-    fun getSymbolForObjectInstance(singleton: IrClass): IrProperty
+    fun getSymbolForObjectInstance(singleton: IrClass): IrField
 }

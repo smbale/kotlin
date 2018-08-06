@@ -12,7 +12,10 @@ import org.jetbrains.kotlin.descriptors.Visibilities
 import org.jetbrains.kotlin.ir.UNDEFINED_OFFSET
 import org.jetbrains.kotlin.ir.backend.js.ir.JsIrBuilder
 import org.jetbrains.kotlin.ir.declarations.*
-import org.jetbrains.kotlin.ir.declarations.impl.*
+import org.jetbrains.kotlin.ir.declarations.impl.IrClassImpl
+import org.jetbrains.kotlin.ir.declarations.impl.IrConstructorImpl
+import org.jetbrains.kotlin.ir.declarations.impl.IrFieldImpl
+import org.jetbrains.kotlin.ir.declarations.impl.IrVariableImpl
 import org.jetbrains.kotlin.ir.descriptors.IrBuiltIns
 import org.jetbrains.kotlin.ir.expressions.IrExpression
 import org.jetbrains.kotlin.ir.expressions.IrGetValue
@@ -110,7 +113,7 @@ class JsSharedVariablesManager(val builtIns: IrBuiltIns, val implicitDeclaration
     }
 
     private val closureBoxFieldDeclaration by lazy {
-        closureBoxPropertyDeclaration.backingField!!
+        closureBoxPropertyDeclaration
     }
 
     private val closureBoxPropertyDeclaration by lazy {
@@ -137,42 +140,25 @@ class JsSharedVariablesManager(val builtIns: IrBuiltIns, val implicitDeclaration
         return declaration
     }
 
-    private fun createClosureBoxPropertyDeclaration(): IrProperty {
+    private fun createClosureBoxPropertyDeclaration(): IrField {
         val descriptor = WrappedPropertyDescriptor()
         val symbol = IrFieldSymbolImpl(descriptor)
         val fieldName = Name.identifier("v")
-
-        val declaration = IrPropertyImpl(
+        return IrFieldImpl(
             UNDEFINED_OFFSET,
             UNDEFINED_OFFSET,
             DescriptorsFactory.FIELD_FOR_OUTER_THIS,
-            descriptor,
+            symbol,
             fieldName,
+            builtIns.anyNType,
             Visibilities.PUBLIC,
-            Modality.FINAL,
-            true,
-            false,
-            false,
             false,
             false
         ).also {
             descriptor.bind(it)
             it.parent = closureBoxClassDeclaration
-            it.backingField = IrFieldImpl(
-                UNDEFINED_OFFSET,
-                UNDEFINED_OFFSET,
-                DescriptorsFactory.FIELD_FOR_OUTER_THIS,
-                symbol,
-                fieldName,
-                builtIns.anyNType,
-                Visibilities.PUBLIC,
-                false,
-                false
-            )
-            it.backingField?.parent = closureBoxClassDeclaration
+            closureBoxClassDeclaration.declarations += it
         }
-        closureBoxClassDeclaration.declarations += declaration
-        return declaration
     }
 
     private fun createClosureBoxConstructorDeclaration(): IrConstructor {
@@ -203,7 +189,7 @@ class JsSharedVariablesManager(val builtIns: IrBuiltIns, val implicitDeclaration
     }
 
     private fun createClosureBoxConstructorParameterDeclaration(irConstructor: IrConstructor): IrValueParameter {
-        return JsIrBuilder.buildValueParameter("p", 0, closureBoxPropertyDeclaration.backingField!!.type).also {
+        return JsIrBuilder.buildValueParameter("p", 0, closureBoxPropertyDeclaration.type).also {
             it.parent = irConstructor
         }
     }

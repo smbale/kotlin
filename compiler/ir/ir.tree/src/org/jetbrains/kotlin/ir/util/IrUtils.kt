@@ -153,11 +153,11 @@ fun IrFunction.createParameterDeclarations() {
         it.parent = this@createParameterDeclarations
     }
 
-    dispatchReceiverParameter = descriptor.dispatchReceiverParameter?.irValueParameter()
-    extensionReceiverParameter = descriptor.extensionReceiverParameter?.irValueParameter()
+    dispatchReceiverParameter = dispatchReceiverParameter?.descriptor?.irValueParameter()
+    extensionReceiverParameter = extensionReceiverParameter?.descriptor?.irValueParameter()
 
     assert(valueParameters.isEmpty())
-    descriptor.valueParameters.mapTo(valueParameters) { it.irValueParameter() }
+    valueParameters.mapTo(valueParameters) { it.descriptor.irValueParameter() }
 
     assert(typeParameters.isEmpty())
     descriptor.typeParameters.mapTo(typeParameters) {

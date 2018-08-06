@@ -9,19 +9,14 @@ import org.jetbrains.kotlin.backend.common.descriptors.DescriptorsFactory
 import org.jetbrains.kotlin.backend.common.descriptors.WrappedClassConstructorDescriptor
 import org.jetbrains.kotlin.backend.common.descriptors.WrappedPropertyDescriptor
 import org.jetbrains.kotlin.descriptors.ClassKind
-import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.descriptors.Visibilities
 import org.jetbrains.kotlin.descriptors.Visibility
 import org.jetbrains.kotlin.ir.UNDEFINED_OFFSET
 import org.jetbrains.kotlin.ir.backend.js.ir.JsIrBuilder
 import org.jetbrains.kotlin.ir.backend.js.utils.Namer
-import org.jetbrains.kotlin.ir.declarations.IrClass
-import org.jetbrains.kotlin.ir.declarations.IrConstructor
-import org.jetbrains.kotlin.ir.declarations.IrEnumEntry
-import org.jetbrains.kotlin.ir.declarations.IrProperty
+import org.jetbrains.kotlin.ir.declarations.*
 import org.jetbrains.kotlin.ir.declarations.impl.IrConstructorImpl
 import org.jetbrains.kotlin.ir.declarations.impl.IrFieldImpl
-import org.jetbrains.kotlin.ir.declarations.impl.IrPropertyImpl
 import org.jetbrains.kotlin.ir.symbols.impl.IrConstructorSymbolImpl
 import org.jetbrains.kotlin.ir.symbols.impl.IrFieldSymbolImpl
 import org.jetbrains.kotlin.ir.types.IrType
@@ -31,13 +26,13 @@ import org.jetbrains.kotlin.name.Name
 import java.util.*
 
 class JsDescriptorsFactory : DescriptorsFactory {
-    private val singletonFieldDescriptors = HashMap<IrClass, IrProperty>()
-    private val outerThisFieldSymbols = HashMap<IrClass, IrProperty>()
+    private val singletonFieldDescriptors = HashMap<IrClass, IrField>()
+    private val outerThisFieldSymbols = HashMap<IrClass, IrField>()
     private val innerClassConstructors = HashMap<IrConstructor, IrConstructor>()
 
-    override fun getSymbolForEnumEntry(enumEntry: IrEnumEntry): IrProperty = TODO()
+    override fun getSymbolForEnumEntry(enumEntry: IrEnumEntry): IrField = TODO()
 
-    override fun getOuterThisFieldSymbol(innerClass: IrClass): IrProperty =
+    override fun getOuterThisFieldSymbol(innerClass: IrClass): IrField =
         if (!innerClass.isInner) throw AssertionError("Class is not inner: ${innerClass.dump()}")
         else {
             outerThisFieldSymbols.getOrPut(innerClass) {
@@ -49,42 +44,27 @@ class JsDescriptorsFactory : DescriptorsFactory {
                 val fieldType = outerClass.defaultType
                 val visibility = Visibilities.PROTECTED
 
-                createPropertyWithBackingField(name, visibility, innerClass, fieldType)
+                createPropertyWithBackingField(name, visibility, innerClass, fieldType, DescriptorsFactory.FIELD_FOR_OUTER_THIS)
             }
         }
 
-    private fun createPropertyWithBackingField(name: Name, visibility: Visibility, parent: IrClass, fieldType: IrType): IrProperty {
+    private fun createPropertyWithBackingField(name: Name, visibility: Visibility, parent: IrClass, fieldType: IrType, origin: IrDeclarationOrigin): IrField {
         val descriptor = WrappedPropertyDescriptor()
         val symbol = IrFieldSymbolImpl(descriptor)
 
-        return IrPropertyImpl(
+        return IrFieldImpl(
             UNDEFINED_OFFSET,
             UNDEFINED_OFFSET,
-            DescriptorsFactory.FIELD_FOR_OUTER_THIS,
-            descriptor,
+            origin,
+            symbol,
             name,
+            fieldType,
             visibility,
-            Modality.FINAL,
-            false,
-            false,
-            false,
-            false,
+            true,
             false
         ).also {
             descriptor.bind(it)
             it.parent = parent
-            it.backingField = IrFieldImpl(
-                UNDEFINED_OFFSET,
-                UNDEFINED_OFFSET,
-                DescriptorsFactory.FIELD_FOR_OUTER_THIS,
-                symbol,
-                name,
-                fieldType,
-                visibility,
-                true,
-                false
-            )
-            it.backingField?.parent = parent
         }
     }
 
@@ -135,16 +115,16 @@ class JsDescriptorsFactory : DescriptorsFactory {
         return newConstructor
     }
 
-    override fun getSymbolForObjectInstance(singleton: IrClass): IrProperty =
+    override fun getSymbolForObjectInstance(singleton: IrClass): IrField =
         singletonFieldDescriptors.getOrPut(singleton) {
-            createObjectInstanceFieldDescriptor(singleton)
+            createObjectInstanceFieldDescriptor(singleton, JsIrBuilder.SYNTHESIZED_DECLARATION)
         }
 
-    private fun createObjectInstanceFieldDescriptor(singleton: IrClass): IrProperty {
+    private fun createObjectInstanceFieldDescriptor(singleton: IrClass, origin: IrDeclarationOrigin): IrField {
         assert(singleton.kind == ClassKind.OBJECT) { "Should be an object: $singleton" }
 
         val name = Name.identifier("INSTANCE")
 
-        return createPropertyWithBackingField(name, Visibilities.PUBLIC, singleton, singleton.defaultType)
+        return createPropertyWithBackingField(name, Visibilities.PUBLIC, singleton, singleton.defaultType, origin)
     }
 }
