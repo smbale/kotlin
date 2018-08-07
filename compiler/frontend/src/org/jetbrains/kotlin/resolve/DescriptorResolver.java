@@ -296,7 +296,8 @@ public class DescriptorResolver {
             @NotNull KtParameter valueParameter,
             int index,
             @NotNull KotlinType type,
-            @NotNull BindingTrace trace
+            @NotNull BindingTrace trace,
+            @NotNull Annotations additionalAnnotations
     ) {
         KotlinType varargElementType = null;
         KotlinType variableType = type;
@@ -305,22 +306,7 @@ public class DescriptorResolver {
             variableType = getVarargParameterType(type);
         }
 
-        KtModifierList modifierList = valueParameter.getModifierList();
-
-        Annotations allAnnotations =
-                annotationResolver.resolveAnnotationsWithoutArguments(scope, valueParameter.getModifierList(), trace);
-        Annotations valueParameterAnnotations = Annotations.Companion.getEMPTY();
-
-        if (modifierList != null) {
-            if (valueParameter.hasValOrVar()) {
-                AnnotationSplitter annotationSplitter = AnnotationSplitter.create(
-                        storageManager, allAnnotations, SetsKt.setOf(CONSTRUCTOR_PARAMETER));
-                valueParameterAnnotations = annotationSplitter.getAnnotationsForTarget(CONSTRUCTOR_PARAMETER);
-            }
-            else {
-                valueParameterAnnotations = allAnnotations;
-            }
-        }
+        Annotations valueParameterAnnotations = resolveValueParameterAnnotations(scope, valueParameter, trace, additionalAnnotations);
 
         KtDestructuringDeclaration destructuringDeclaration = valueParameter.getDestructuringDeclaration();
 
@@ -387,6 +373,27 @@ public class DescriptorResolver {
 
         trace.record(BindingContext.VALUE_PARAMETER, valueParameter, valueParameterDescriptor);
         return valueParameterDescriptor;
+    }
+
+    @NotNull
+    private Annotations resolveValueParameterAnnotations(
+            @NotNull LexicalScope scope,
+            @NotNull KtParameter parameter,
+            @NotNull BindingTrace trace,
+            @NotNull Annotations additionalAnnotations
+    ) {
+        KtModifierList modifierList = parameter.getModifierList();
+        if (modifierList == null) {
+            return additionalAnnotations;
+        }
+
+        Annotations allAnnotations = annotationResolver.resolveAnnotationsWithoutArguments(scope, modifierList, trace);
+        if (!parameter.hasValOrVar()) {
+            return new CompositeAnnotations(allAnnotations, additionalAnnotations);
+        }
+
+        AnnotationSplitter splitter = AnnotationSplitter.create(storageManager, allAnnotations, SetsKt.setOf(CONSTRUCTOR_PARAMETER));
+        return new CompositeAnnotations(splitter.getAnnotationsForTarget(CONSTRUCTOR_PARAMETER), additionalAnnotations);
     }
 
     @NotNull
@@ -1058,8 +1065,10 @@ public class DescriptorResolver {
                     }
                 }
 
-                ValueParameterDescriptorImpl valueParameterDescriptor =
-                        resolveValueParameterDescriptor(scopeWithTypeParameters, setterDescriptor, parameter, 0, type, trace);
+                ValueParameterDescriptorImpl valueParameterDescriptor = resolveValueParameterDescriptor(
+                        scopeWithTypeParameters, setterDescriptor, parameter, 0, type, trace,
+                        annotationSplitter.getAnnotationsForTarget(SETTER_PARAMETER)
+                );
                 setterDescriptor.initialize(valueParameterDescriptor);
             }
             else {
@@ -1069,15 +1078,17 @@ public class DescriptorResolver {
             trace.record(BindingContext.PROPERTY_ACCESSOR, setter, setterDescriptor);
         }
         else if (property.isVar()) {
-            Annotations setterAnnotations = annotationSplitter.getAnnotationsForTarget(PROPERTY_SETTER);
-            setterDescriptor = DescriptorFactory.createSetter(propertyDescriptor, setterAnnotations, !hasDelegate,
-                                                              /* isExternal = */ false, property.hasModifier(KtTokens.INLINE_KEYWORD),
-                                                              propertyDescriptor.getSource());
+            setterDescriptor = DescriptorFactory.createSetter(
+                    propertyDescriptor,
+                    annotationSplitter.getAnnotationsForTarget(PROPERTY_SETTER),
+                    annotationSplitter.getAnnotationsForTarget(SETTER_PARAMETER),
+                    !hasDelegate, false, property.hasModifier(KtTokens.INLINE_KEYWORD),
+                    propertyDescriptor.getSource()
+            );
         }
 
         if (!property.isVar()) {
             if (setter != null) {
-                //                trace.getErrorHandler().genericError(setter.asElement().getNode(), "A 'val'-property cannot have a setter");
                 trace.report(VAL_WITH_SETTER.on(setter));
             }
         }
@@ -1228,7 +1239,11 @@ public class DescriptorResolver {
 
         PropertyGetterDescriptorImpl getter = DescriptorFactory.createDefaultGetter(propertyDescriptor, getterAnnotations);
         PropertySetterDescriptor setter =
-                propertyDescriptor.isVar() ? DescriptorFactory.createDefaultSetter(propertyDescriptor, setterAnnotations) : null;
+                propertyDescriptor.isVar()
+                ? DescriptorFactory.createDefaultSetter(
+                        propertyDescriptor, setterAnnotations, annotationSplitter.getAnnotationsForTarget(SETTER_PARAMETER)
+                )
+                : null;
 
         propertyDescriptor.initialize(getter, setter);
         getter.initialize(propertyDescriptor.getType());
