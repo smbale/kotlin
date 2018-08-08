@@ -161,7 +161,9 @@ class MemberDeserializer(private val c: DeserializationContext) {
         val local = c.childContext(function, proto.typeParameterList)
 
         function.initialize(
-            proto.receiverType(c.typeTable)?.let { local.typeDeserializer.type(it, receiverAnnotations) },
+            proto.receiverType(c.typeTable)?.let { local.typeDeserializer.type(it, receiverAnnotations) }?.let { receiverType ->
+                DescriptorFactory.createExtensionReceiverParameterForCallable(function, receiverType, Annotations.EMPTY)
+            },
             getDispatchReceiverParameter(),
             local.typeDeserializer.ownTypeParameters,
             local.memberDeserializer.valueParameters(proto.valueParameterList, proto, AnnotatedCallableKind.FUNCTION),

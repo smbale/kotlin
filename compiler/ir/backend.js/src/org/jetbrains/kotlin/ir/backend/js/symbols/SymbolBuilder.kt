@@ -21,6 +21,7 @@ import org.jetbrains.kotlin.ir.symbols.impl.IrVariableSymbolImpl
 import org.jetbrains.kotlin.ir.types.IrType
 import org.jetbrains.kotlin.ir.types.toKotlinType
 import org.jetbrains.kotlin.name.Name
+import org.jetbrains.kotlin.resolve.DescriptorFactory
 
 object JsSymbolBuilder {
     fun buildValueParameter(containingSymbol: IrSimpleFunctionSymbol, index: Int, type: IrType, name: String? = null) =
@@ -93,7 +94,9 @@ fun IrSimpleFunctionSymbol.initialize(
     visibility: Visibility = Visibilities.LOCAL
 ) = this.apply {
     (descriptor as FunctionDescriptorImpl).initialize(
-        receiverParameterType?.toKotlinType(),
+        receiverParameterType?.toKotlinType()?.let {
+            DescriptorFactory.createExtensionReceiverParameterForCallable(descriptor, it, Annotations.EMPTY)
+        },
         dispatchParameterDescriptor,
         typeParameters,
         valueParameters,

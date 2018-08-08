@@ -70,7 +70,7 @@ class DeserializedSimpleFunctionDescriptor(
         private set
 
     fun initialize(
-        receiverParameterType: KotlinType?,
+        extensionReceiverParameter: ReceiverParameterDescriptor?,
         dispatchReceiverParameter: ReceiverParameterDescriptor?,
         typeParameters: List<TypeParameterDescriptor>,
         unsubstitutedValueParameters: List<ValueParameterDescriptor>,
@@ -81,7 +81,7 @@ class DeserializedSimpleFunctionDescriptor(
         isExperimentalCoroutineInReleaseEnvironment: Boolean
     ): SimpleFunctionDescriptorImpl {
         return super.initialize(
-            receiverParameterType,
+            extensionReceiverParameter,
             dispatchReceiverParameter,
             typeParameters,
             unsubstitutedValueParameters,
