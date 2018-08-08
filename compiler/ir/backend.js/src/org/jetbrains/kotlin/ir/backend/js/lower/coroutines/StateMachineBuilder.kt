@@ -298,22 +298,11 @@ class StateMachineBuilder(
 
         currentState.successors += continueState
 
-        transformLastExpression {
-            JsIrBuilder.buildSetField(
-                stateSymbol,
-                thisReceiver,
-                dispatch,
-                unit
-            )
-        }
+        transformLastExpression { JsIrBuilder.buildSetField(stateSymbol, thisReceiver, dispatch, unit) }
 
         addStatement(JsIrBuilder.buildSetVariable(suspendResult, result, unit))
 
-        val irReturn = JsIrBuilder.buildReturn(
-            function,
-            JsIrBuilder.buildGetValue(suspendResult),
-            nothing
-        )
+        val irReturn = JsIrBuilder.buildReturn(function, JsIrBuilder.buildGetValue(suspendResult), nothing)
         val check = JsIrBuilder.buildCall(eqeqeqSymbol).apply {
             putValueArgument(0, JsIrBuilder.buildGetValue(suspendResult))
             putValueArgument(1, JsIrBuilder.buildCall(context.ir.symbols.coroutineSuspendedGetter))

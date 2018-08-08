@@ -133,7 +133,7 @@ class JsIntrinsics(
 
     // Coroutines
 
-    val jsCoroutineContext = context.symbolTable.referenceFunction(context.coroutineContextProperty.getter!!)
+    val jsCoroutineContext = context.symbolTable.referenceSimpleFunction(context.coroutineContextProperty.getter!!)
 
     val jsGetContinuation = context.run {
         val f = getInternalFunctions("getContinuation")

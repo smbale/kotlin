@@ -14,7 +14,10 @@ import org.jetbrains.kotlin.config.languageVersionSettings
 import org.jetbrains.kotlin.descriptors.ModuleDescriptor
 import org.jetbrains.kotlin.ir.backend.js.lower.*
 import org.jetbrains.kotlin.ir.backend.js.lower.coroutines.SuspendFunctionsLowering
-import org.jetbrains.kotlin.ir.backend.js.lower.inline.*
+import org.jetbrains.kotlin.ir.backend.js.lower.inline.FunctionInlining
+import org.jetbrains.kotlin.ir.backend.js.lower.inline.RemoveInlineFunctionsWithReifiedTypeParametersLowering
+import org.jetbrains.kotlin.ir.backend.js.lower.inline.ReturnableBlockLowering
+import org.jetbrains.kotlin.ir.backend.js.lower.inline.replaceUnboundSymbols
 import org.jetbrains.kotlin.ir.backend.js.transformers.irToJs.IrModuleToJsTransformer
 import org.jetbrains.kotlin.ir.declarations.IrFile
 import org.jetbrains.kotlin.ir.declarations.IrModuleFragment
@@ -87,8 +90,6 @@ private fun JsIrBackendContext.lower(moduleFragment: IrModuleFragment) {
     moduleFragment.files.forEach(SharedVariablesLowering(this)::runOnFilePostfix)
     moduleFragment.files.forEach(EnumClassLowering(this)::runOnFilePostfix)
     moduleFragment.files.forEach(EnumUsageLowering(this)::lower)
-//    EnumClassLowering(this).runOnFilePostfix(file)
-//    EnumUsageLowering(this).lower(file)
     moduleFragment.files.forEach(ReturnableBlockLowering(this)::lower)
     moduleFragment.files.forEach(LocalDeclarationsLowering(this)::runOnFilePostfix)
     moduleFragment.files.forEach(InnerClassesLowering(this)::runOnFilePostfix)
@@ -111,23 +112,3 @@ private fun JsIrBackendContext.lower(moduleFragment: IrModuleFragment) {
 }
 
 private fun FileLoweringPass.lower(files: List<IrFile>) = files.forEach { lower(it) }
-
-// TODO find out why duplicates occur
-private fun IrModuleFragment.removeDuplicates(): IrModuleFragment {
-
-    fun <T> MutableList<T>.removeDuplicates() {
-        val tmp = toSet()
-        clear()
-        addAll(tmp)
-    }
-
-    dependencyModules.removeDuplicates()
-    dependencyModules.forEach { it.externalPackageFragments.removeDuplicates() }
-
-    return this
-}
-private fun FileLoweringPass.lower(files: List<IrFile>) = files.forEach { lower(it) }
-private fun DeclarationContainerLoweringPass.runOnFilePostfix(files: List<IrFile>) = files.forEach { runOnFilePostfix(it) }
-private fun BodyLoweringPass.runOnFilePostfix(files: List<IrFile>) = files.forEach { runOnFilePostfix(it) }
-private fun FunctionLoweringPass.runOnFilePostfix(files: List<IrFile>) = files.forEach { runOnFilePostfix(it) }
-private fun ClassLoweringPass.runOnFilePostfix(files: List<IrFile>) = files.forEach { runOnFilePostfix(it) }
