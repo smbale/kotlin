@@ -110,6 +110,11 @@ class JsDescriptorsFactory : DescriptorsFactory {
             newValueParameters += JsIrBuilder.buildValueParameter(p.name, p.index + 1, p.type).also { it.parent = newConstructor }
         }
 
+        for (p in oldConstructor.typeParameters) {
+            newConstructor.typeParameters += JsIrBuilder.buildTypeParameter(p.name, p.index, p.isReified, p.variance)
+                .also { it.parent = newConstructor }
+        }
+
         newConstructor.valueParameters += newValueParameters
 
         return newConstructor

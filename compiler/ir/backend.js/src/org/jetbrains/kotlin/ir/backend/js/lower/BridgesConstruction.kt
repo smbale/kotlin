@@ -112,7 +112,7 @@ class BridgesConstruction(val context: JsIrBackendContext) : ClassLoweringPass {
 
         // TODO: Support offsets for debug info
         val irFunction = JsIrBuilder.buildFunction(
-            bridge.name.identifier,
+            bridge.name,
             bridge.visibility,
             bridge.modality, // TODO: should copy modality?
             bridge.isInline,

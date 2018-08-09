@@ -101,6 +101,17 @@ object JsIrBuilder {
         isTailrec: Boolean = false,
         isSuspend: Boolean = false,
         origin: IrDeclarationOrigin = SYNTHESIZED_DECLARATION
+    ) = JsIrBuilder.buildFunction(Name.identifier(name), visibility, modality, isInline, isExternal, isTailrec, isSuspend, origin)
+
+    fun buildFunction(
+        name: Name,
+        visibility: Visibility = Visibilities.PUBLIC,
+        modality: Modality = Modality.FINAL,
+        isInline: Boolean = false,
+        isExternal: Boolean = false,
+        isTailrec: Boolean = false,
+        isSuspend: Boolean = false,
+        origin: IrDeclarationOrigin = SYNTHESIZED_DECLARATION
     ): IrSimpleFunction {
         val descriptor = WrappedSimpleFunctionDescriptor()
         return IrFunctionImpl(
@@ -108,7 +119,7 @@ object JsIrBuilder {
             UNDEFINED_OFFSET,
             origin,
             IrSimpleFunctionSymbolImpl(descriptor),
-            Name.identifier(name),
+            name,
             visibility,
             modality,
             isInline,

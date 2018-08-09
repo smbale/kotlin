@@ -138,7 +138,13 @@ class SecondaryCtorLowering(val context: JsIrBackendContext) : IrElementTransfor
             }
 
             it.valueParameters += (newValueParameters + thisParam)
-            it.typeParameters += declaration.typeParameters
+
+            it.typeParameters += declaration.typeParameters.map { p ->
+                val np = JsIrBuilder.buildTypeParameter(p.name, p.index, p.isReified, p.variance)
+                np.parent = it
+                np
+            }
+
             it.returnType = type
             it.parent = declaration.parent
 
@@ -169,7 +175,11 @@ class SecondaryCtorLowering(val context: JsIrBackendContext) : IrElementTransfor
                 np.parent = it
                 np
             }
-            it.typeParameters += declaration.typeParameters
+            it.typeParameters += declaration.typeParameters.map { p ->
+                val np = JsIrBuilder.buildTypeParameter(p.name, p.index, p.isReified, p.variance)
+                np.parent = it
+                np
+            }
             it.parent = declaration.parent
 
             it.returnType = type
