@@ -92,8 +92,6 @@ class AnnotationSplitter(
             if (useSiteTarget != null) {
                 if (useSiteTarget in applicableTargets)
                     map.getOrPut(useSiteTarget, { arrayListOf() }).add(annotationWithTarget)
-                else
-                    other.add(annotationWithTarget)
 
                 continue@outer
             }
