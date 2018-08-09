@@ -54,7 +54,7 @@ fun hashCode(obj: dynamic): Int {
             return getNumberHashCode(obj);
         }
         if ("boolean" === objType) {
-            return Number(obj)
+            return +obj;
         }
 
         var str = String(obj);
