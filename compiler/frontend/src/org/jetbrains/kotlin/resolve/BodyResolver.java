@@ -730,6 +730,8 @@ public class BodyResolver {
         }
 
         resolvePropertyAccessors(c, property, propertyDescriptor);
+
+        ForceResolveUtil.forceResolveAllContents(propertyDescriptor.getAnnotations());
     }
 
     private void resolvePropertyDeclarationBodies(@NotNull BodiesResolveContext c) {
@@ -782,16 +784,16 @@ public class BodyResolver {
         PropertyGetterDescriptor getterDescriptor = propertyDescriptor.getGetter();
         if (getter != null && getterDescriptor != null) {
             LexicalScope accessorScope = makeScopeForPropertyAccessor(c, getter, propertyDescriptor);
-            ForceResolveUtil.forceResolveAllContents(getterDescriptor.getAnnotations());
             resolveFunctionBody(c.getOuterDataFlowInfo(), fieldAccessTrackingTrace, getter, getterDescriptor, accessorScope);
+            ForceResolveUtil.forceResolveAllContents(getterDescriptor.getAnnotations());
         }
 
         KtPropertyAccessor setter = property.getSetter();
         PropertySetterDescriptor setterDescriptor = propertyDescriptor.getSetter();
         if (setter != null && setterDescriptor != null) {
             LexicalScope accessorScope = makeScopeForPropertyAccessor(c, setter, propertyDescriptor);
-            ForceResolveUtil.forceResolveAllContents(setterDescriptor.getAnnotations());
             resolveFunctionBody(c.getOuterDataFlowInfo(), fieldAccessTrackingTrace, setter, setterDescriptor, accessorScope);
+            ForceResolveUtil.forceResolveAllContents(setterDescriptor.getAnnotations());
         }
     }
 
