@@ -58,6 +58,7 @@ abstract class KotlinDslGradleKotlinFrameworkSupportProvider(
             kotlinVersion = LAST_SNAPSHOT_VERSION
         }
 
+
         val useNewSyntax = buildScriptData.gradleVersion >= MIN_GRADLE_VERSION_FOR_NEW_PLUGIN_SYNTAX
         if (useNewSyntax) {
             if (additionalRepository != null) {
