@@ -38,8 +38,6 @@ public class DescriptorUtils {
     public static final Name ENUM_VALUES = Name.identifier("values");
     public static final Name ENUM_VALUE_OF = Name.identifier("valueOf");
     public static final FqName JVM_NAME = new FqName("kotlin.jvm.JvmName");
-    private static final FqName VOLATILE = new FqName("kotlin.jvm.Volatile");
-    private static final FqName SYNCHRONIZED = new FqName("kotlin.jvm.Synchronized");
     public static final FqName COROUTINES_PACKAGE_FQ_NAME_RELEASE = new FqName("kotlin.coroutines");
     public static final FqName COROUTINES_PACKAGE_FQ_NAME_EXPERIMENTAL =
             COROUTINES_PACKAGE_FQ_NAME_RELEASE.child(Name.identifier("experimental"));
@@ -563,16 +561,6 @@ public class DescriptorUtils {
     @Nullable
     public static AnnotationDescriptor getJvmNameAnnotation(@NotNull Annotated annotated) {
         return getAnnotationByFqName(annotated.getAnnotations(), JVM_NAME);
-    }
-
-    @Nullable
-    public static AnnotationDescriptor getVolatileAnnotation(@NotNull Annotated annotated) {
-        return getAnnotationByFqName(annotated.getAnnotations(), VOLATILE);
-    }
-
-    @Nullable
-    public static AnnotationDescriptor getSynchronizedAnnotation(@NotNull Annotated annotated) {
-        return getAnnotationByFqName(annotated.getAnnotations(), SYNCHRONIZED);
     }
 
     @NotNull
