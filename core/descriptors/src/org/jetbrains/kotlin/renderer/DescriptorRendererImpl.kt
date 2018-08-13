@@ -985,25 +985,32 @@ internal class DescriptorRendererImpl(
         }
 
         override fun visitPropertyGetterDescriptor(descriptor: PropertyGetterDescriptor, builder: StringBuilder) {
-            if (renderAccessors) {
-                renderAccessorModifiers(descriptor, builder)
-                builder.append("getter for ")
-                renderProperty(descriptor.correspondingProperty, builder)
+            when (propertyAccessorRenderingPolicy) {
+                PropertyAccessorRenderingPolicy.PRETTY -> {
+                    renderAccessorModifiers(descriptor, builder)
+                    builder.append("getter for ")
+                    renderProperty(descriptor.correspondingProperty, builder)
+                }
+                PropertyAccessorRenderingPolicy.DEBUG -> {
+                    visitFunctionDescriptor(descriptor, builder)
+                }
+                PropertyAccessorRenderingPolicy.NONE -> {
+                }
             }
-            else {
-                visitFunctionDescriptor(descriptor, builder)
-            }
-
         }
 
         override fun visitPropertySetterDescriptor(descriptor: PropertySetterDescriptor, builder: StringBuilder) {
-            if (renderAccessors) {
-                renderAccessorModifiers(descriptor, builder)
-                builder.append("setter for ")
-                renderProperty(descriptor.correspondingProperty, builder)
-            }
-            else {
-                visitFunctionDescriptor(descriptor, builder)
+            when (propertyAccessorRenderingPolicy) {
+                PropertyAccessorRenderingPolicy.PRETTY -> {
+                    renderAccessorModifiers(descriptor, builder)
+                    builder.append("setter for ")
+                    renderProperty(descriptor.correspondingProperty, builder)
+                }
+                PropertyAccessorRenderingPolicy.DEBUG -> {
+                    visitFunctionDescriptor(descriptor, builder)
+                }
+                PropertyAccessorRenderingPolicy.NONE -> {
+                }
             }
         }
 
