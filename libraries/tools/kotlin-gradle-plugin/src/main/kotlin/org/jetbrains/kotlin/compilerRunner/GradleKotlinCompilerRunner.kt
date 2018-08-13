@@ -29,6 +29,7 @@ import org.jetbrains.kotlin.cli.common.messages.MessageCollector
 import org.jetbrains.kotlin.cli.common.messages.MessageRenderer
 import org.gradle.api.invocation.Gradle
 import org.jetbrains.kotlin.config.Services
+import org.jetbrains.kotlin.daemon.client.COMPILER_DAEMON_RUNNER_PROPERTY
 import org.jetbrains.kotlin.daemon.client.CompileServiceSession
 import org.jetbrains.kotlin.daemon.common.*
 import org.jetbrains.kotlin.daemon.common.IncrementalModuleEntry
@@ -168,6 +169,11 @@ internal class GradleCompilerRunner(private val project: Project) : KotlinCompil
                 return daemonExitCode
             }
             else {
+                if (System.getProperty(COMPILER_DAEMON_RUNNER_PROPERTY) != null) {
+                    log.warn("Could not connect to kotlin daemon. Fallback strategy is disabled when $COMPILER_DAEMON_RUNNER_PROPERTY is set.")
+                    return ExitCode.INTERNAL_ERROR
+                }
+
                 log.warn("Could not connect to kotlin daemon. Using fallback strategy.")
             }
         }
