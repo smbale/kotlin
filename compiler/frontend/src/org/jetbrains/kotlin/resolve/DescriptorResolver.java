@@ -873,8 +873,9 @@ public class DescriptorResolver {
                                        () -> AnnotationSplitter.getTargetSet(false, trace.getBindingContext(), wrapper));
 
         Annotations propertyAnnotations = new CompositeAnnotations(CollectionsKt.listOf(
-                annotationSplitter.getAnnotationsForTargets(PROPERTY, FIELD, PROPERTY_DELEGATE_FIELD),
-                annotationSplitter.getOtherAnnotations()));
+                annotationSplitter.getAnnotationsForTarget(PROPERTY),
+                annotationSplitter.getOtherAnnotations())
+        );
 
         PropertyDescriptorImpl propertyDescriptor = PropertyDescriptorImpl.create(
                 container,
@@ -981,7 +982,11 @@ public class DescriptorResolver {
                 propertyInfo.getPropertySetter(),
                 propertyInfo.getHasDelegate());
 
-        propertyDescriptor.initialize(getter, setter);
+        propertyDescriptor.initialize(
+                getter, setter,
+                new FieldDescriptorImpl(annotationSplitter.getAnnotationsForTarget(FIELD), propertyDescriptor),
+                new FieldDescriptorImpl(annotationSplitter.getAnnotationsForTarget(PROPERTY_DELEGATE_FIELD), propertyDescriptor)
+        );
 
         trace.record(BindingContext.VARIABLE, variableDeclaration, propertyDescriptor);
         return propertyDescriptor;
@@ -1212,8 +1217,9 @@ public class DescriptorResolver {
                                        () -> AnnotationSplitter.getTargetSet(true, trace.getBindingContext(), propertyWrapper));
 
         Annotations propertyAnnotations = new CompositeAnnotations(
-                annotationSplitter.getAnnotationsForTargets(PROPERTY, FIELD),
-                annotationSplitter.getOtherAnnotations());
+                annotationSplitter.getAnnotationsForTarget(PROPERTY),
+                annotationSplitter.getOtherAnnotations()
+        );
 
         PropertyDescriptorImpl propertyDescriptor = PropertyDescriptorImpl.create(
                 classDescriptor,
@@ -1246,7 +1252,12 @@ public class DescriptorResolver {
                 )
                 : null;
 
-        propertyDescriptor.initialize(getter, setter);
+        propertyDescriptor.initialize(
+                getter, setter,
+                new FieldDescriptorImpl(annotationSplitter.getAnnotationsForTarget(FIELD), propertyDescriptor),
+                null
+        );
+
         getter.initialize(propertyDescriptor.getType());
 
         trace.record(BindingContext.PRIMARY_CONSTRUCTOR_PARAMETER, parameter, propertyDescriptor);

@@ -138,9 +138,11 @@ class DeserializedPropertyDescriptor(
     fun initialize(
         getter: PropertyGetterDescriptorImpl?,
         setter: PropertySetterDescriptor?,
+        backingField: FieldDescriptor?,
+        delegateField: FieldDescriptor?,
         isExperimentalCoroutineInReleaseEnvironment: Boolean
     ) {
-        super.initialize(getter, setter)
+        super.initialize(getter, setter, backingField, delegateField)
             .also { this.isExperimentalCoroutineInReleaseEnvironment = isExperimentalCoroutineInReleaseEnvironment }
     }
 

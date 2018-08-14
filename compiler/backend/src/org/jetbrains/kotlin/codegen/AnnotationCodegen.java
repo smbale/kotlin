@@ -19,7 +19,6 @@ package org.jetbrains.kotlin.codegen;
 import kotlin.collections.CollectionsKt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.kotlin.codegen.annotation.WrappedAnnotated;
 import org.jetbrains.kotlin.codegen.state.KotlinTypeMapper;
 import org.jetbrains.kotlin.descriptors.*;
 import org.jetbrains.kotlin.descriptors.annotations.*;
@@ -153,29 +152,41 @@ public abstract class AnnotationCodegen {
             @Nullable Type returnType,
             @NotNull Set<String> annotationDescriptorsAlreadyPresent
     ) {
-        Annotated unwrapped = annotated;
-        if (annotated instanceof WrappedAnnotated) {
-            unwrapped = ((WrappedAnnotated) annotated).getOriginalAnnotated();
+        if (annotated instanceof CallableDescriptor) {
+            generateAdditionalCallableAnnotations((CallableDescriptor) annotated, returnType, annotationDescriptorsAlreadyPresent);
         }
-
-        if (unwrapped instanceof CallableDescriptor) {
-            CallableDescriptor descriptor = (CallableDescriptor) unwrapped;
-
-            // No need to annotate privates, synthetic accessors and their parameters
-            if (isInvisibleFromTheOutside(descriptor)) return;
-            if (descriptor instanceof ValueParameterDescriptor && isInvisibleFromTheOutside(descriptor.getContainingDeclaration())) return;
-
-            if (returnType != null && !AsmUtil.isPrimitive(returnType)) {
-                generateNullabilityAnnotation(descriptor.getReturnType(), annotationDescriptorsAlreadyPresent);
-            }
+        else if (annotated instanceof FieldDescriptor) {
+            generateAdditionalCallableAnnotations(
+                    ((FieldDescriptor) annotated).getCorrespondingProperty(), returnType, annotationDescriptorsAlreadyPresent
+            );
         }
-        if (unwrapped instanceof ClassDescriptor) {
-            ClassDescriptor classDescriptor = (ClassDescriptor) unwrapped;
-            if (classDescriptor.getKind() == ClassKind.ANNOTATION_CLASS) {
-                generateDocumentedAnnotation(classDescriptor, annotationDescriptorsAlreadyPresent);
-                generateRetentionAnnotation(classDescriptor, annotationDescriptorsAlreadyPresent);
-                generateTargetAnnotation(classDescriptor, annotationDescriptorsAlreadyPresent);
-            }
+        else if (annotated instanceof ClassDescriptor) {
+            generateAdditionalClassAnnotations(annotationDescriptorsAlreadyPresent, (ClassDescriptor) annotated);
+        }
+    }
+
+    private void generateAdditionalCallableAnnotations(
+            @NotNull CallableDescriptor descriptor,
+            @Nullable Type returnType,
+            @NotNull Set<String> annotationDescriptorsAlreadyPresent
+    ) {
+        // No need to annotate privates, synthetic accessors and their parameters
+        if (isInvisibleFromTheOutside(descriptor)) return;
+        if (descriptor instanceof ValueParameterDescriptor && isInvisibleFromTheOutside(descriptor.getContainingDeclaration())) return;
+
+        if (returnType != null && !AsmUtil.isPrimitive(returnType)) {
+            generateNullabilityAnnotation(descriptor.getReturnType(), annotationDescriptorsAlreadyPresent);
+        }
+    }
+
+    private void generateAdditionalClassAnnotations(
+            @NotNull Set<String> annotationDescriptorsAlreadyPresent,
+            @NotNull ClassDescriptor descriptor
+    ) {
+        if (descriptor.getKind() == ClassKind.ANNOTATION_CLASS) {
+            generateDocumentedAnnotation(descriptor, annotationDescriptorsAlreadyPresent);
+            generateRetentionAnnotation(descriptor, annotationDescriptorsAlreadyPresent);
+            generateTargetAnnotation(descriptor, annotationDescriptorsAlreadyPresent);
         }
     }
 
