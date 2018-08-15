@@ -64,13 +64,13 @@ class PropertyGenerator(declarationGenerator: DeclarationGenerator) : Declaratio
                     }
 
             val getter = propertyDescriptor.getter
-                    ?: throw AssertionError("Property declared in primary constructor has no getter: $propertyDescriptor")
+                ?: throw AssertionError("Property declared in primary constructor has no getter: $propertyDescriptor")
             irProperty.getter =
                     FunctionGenerator(declarationGenerator).generateDefaultAccessorForPrimaryConstructorParameter(getter, ktParameter)
 
             if (propertyDescriptor.isVar) {
                 val setter = propertyDescriptor.setter
-                        ?: throw AssertionError("Property declared in primary constructor has no setter: $propertyDescriptor")
+                    ?: throw AssertionError("Property declared in primary constructor has no setter: $propertyDescriptor")
                 irProperty.setter =
                         FunctionGenerator(declarationGenerator).generateDefaultAccessorForPrimaryConstructorParameter(setter, ktParameter)
             }
