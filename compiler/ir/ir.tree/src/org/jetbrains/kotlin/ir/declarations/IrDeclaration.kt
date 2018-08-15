@@ -48,3 +48,4 @@ interface IrOverridableDeclaration<S : IrSymbol> : IrDeclaration {
 interface IrDeclarationWithVisibility : IrDeclaration {
     val visibility: Visibility
 }
+
