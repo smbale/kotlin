@@ -333,7 +333,7 @@ public class PropertyCodegen {
     // Annotations on properties are stored in bytecode on an empty synthetic method. This way they're still
     // accessible via reflection, and 'deprecated' and 'synthetic' flags prevent this method from being called accidentally
     private void generateSyntheticMethodIfNeeded(@NotNull PropertyDescriptor descriptor, @NotNull Annotations annotations) {
-        if (annotations.getAllAnnotations().isEmpty()) return;
+        if (annotations.isEmpty()) return;
 
         DeclarationDescriptor contextDescriptor = context.getContextDescriptor();
         if (!isInterface(contextDescriptor) || processInterfaceMethod(descriptor, kind, false, true, state.getJvmDefaultMode())) {

@@ -87,14 +87,7 @@ class AnnotationSplitter(
         val applicableTargets = applicableTargetsLazy()
         val applicableTargetsWithoutUseSiteTarget = applicableTargets.intersect(TARGET_PRIORITIES)
 
-        outer@ for ((annotation, useSiteTarget) in allAnnotations.getAllAnnotations()) {
-            if (useSiteTarget != null) {
-                if (useSiteTarget in applicableTargets)
-                    map.getOrPut(useSiteTarget) { arrayListOf() }.add(annotation)
-
-                continue@outer
-            }
-
+        outer@ for (annotation in allAnnotations) {
             for (target in TARGET_PRIORITIES) {
                 if (target !in applicableTargetsWithoutUseSiteTarget) continue
 
@@ -108,6 +101,14 @@ class AnnotationSplitter(
             }
 
             other.add(annotation)
+        }
+
+        for ((annotation, useSiteTarget) in allAnnotations.getUseSiteTargetedAnnotations()) {
+            if (useSiteTarget == null) continue
+
+            if (useSiteTarget in applicableTargets) {
+                map.getOrPut(useSiteTarget) { arrayListOf() }.add(annotation)
+            }
         }
 
         map to AnnotationsImpl(other)
@@ -132,7 +133,6 @@ class AnnotationSplitter(
         override fun hasAnnotation(fqName: FqName) = annotations.hasAnnotation(fqName)
         override fun findAnnotation(fqName: FqName) = annotations.findAnnotation(fqName)
         override fun getUseSiteTargetedAnnotations() = annotations.getUseSiteTargetedAnnotations()
-        override fun getAllAnnotations() = annotations.getAllAnnotations()
         override fun iterator() = annotations.iterator()
         override fun toString() = annotations.toString()
     }
