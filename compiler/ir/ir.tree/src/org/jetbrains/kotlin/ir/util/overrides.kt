@@ -37,17 +37,21 @@ fun SymbolTable.declareFieldWithOverrides(
     endOffset: Int,
     origin: IrDeclarationOrigin,
     descriptor: PropertyDescriptor,
-    type: IrType
+    type: IrType,
+    hasBackingField: (PropertyDescriptor) -> Boolean
 ) =
     declareField(startOffset, endOffset, origin, descriptor, type).also { declaration ->
-        generateOverriddenFieldSymbols(declaration, this)
+        generateOverriddenFieldSymbols(declaration, this, hasBackingField)
     }
 
 fun generateOverriddenFieldSymbols(
     declaration: IrField,
-    symbolTable: SymbolTable
+    symbolTable: SymbolTable,
+    hasBackingField: (PropertyDescriptor) -> Boolean
 ) {
-    declaration.descriptor.overriddenDescriptors.mapTo(declaration.overriddenSymbols) {
-        symbolTable.referenceField(it.original)
+    declaration.descriptor.overriddenDescriptors.mapNotNullTo(declaration.overriddenSymbols) {
+        if (hasBackingField(it)) {
+            symbolTable.referenceField(it.original)
+        } else null
     }
 }

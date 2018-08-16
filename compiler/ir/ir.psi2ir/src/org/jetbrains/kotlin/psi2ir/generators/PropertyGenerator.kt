@@ -31,6 +31,7 @@ import org.jetbrains.kotlin.psi.psiUtil.startOffset
 import org.jetbrains.kotlin.psi2ir.pureEndOffsetOrUndefined
 import org.jetbrains.kotlin.psi2ir.pureStartOffsetOrUndefined
 import org.jetbrains.kotlin.resolve.BindingContext
+import org.jetbrains.kotlin.resolve.source.KotlinSourceElement
 
 class PropertyGenerator(declarationGenerator: DeclarationGenerator) : DeclarationGeneratorExtension(declarationGenerator) {
     fun generatePropertyDeclaration(ktProperty: KtProperty): IrProperty {
@@ -128,7 +129,8 @@ class PropertyGenerator(declarationGenerator: DeclarationGenerator) : Declaratio
             if (propertyDescriptor.hasBackingField())
                 context.symbolTable.declareFieldWithOverrides(
                     startOffset, endOffset, IrDeclarationOrigin.FAKE_OVERRIDE,
-                    propertyDescriptor, propertyDescriptor.type.toIrType()
+                    propertyDescriptor, propertyDescriptor.type.toIrType(),
+                    { it.hasBackingField() }
                 )
             else
                 null
@@ -144,12 +146,11 @@ class PropertyGenerator(declarationGenerator: DeclarationGenerator) : Declaratio
         )
     }
 
-    private fun PropertyDescriptor.hasBackingField(): Boolean {
-        return if (kind == CallableMemberDescriptor.Kind.FAKE_OVERRIDE) {
-            overriddenDescriptors.any { it.hasBackingField() }
-        } else {
-            get(BindingContext.BACKING_FIELD_REQUIRED, this) ?: false
-        }
+    private fun PropertyDescriptor.hasBackingField(): Boolean = when {
+        kind == CallableMemberDescriptor.Kind.FAKE_OVERRIDE -> overriddenDescriptors.any { it.hasBackingField() }
+        source is KotlinSourceElement ->  get(BindingContext.BACKING_FIELD_REQUIRED, this) ?: false
+        getter != null -> false
+        else -> true
     }
 
     private fun generateGetterIfRequired(ktProperty: KtProperty, property: PropertyDescriptor): IrSimpleFunction? {
