@@ -44,6 +44,8 @@ private const val JS_BUILD_META_INFO_FILE_NAME = "js-build-meta-info.txt"
 
 class KotlinJsModuleBuildTarget(compileContext: CompileContext, jpsModuleBuildTarget: ModuleBuildTarget) :
     KotlinModuleBuildTarget<JsBuildMetaInfo>(compileContext, jpsModuleBuildTarget) {
+    override val globalLookupCacheId: String
+        get() = "js"
 
     override val isIncrementalCompilationEnabled: Boolean
         get() = IncrementalCompilation.isEnabledForJs()

@@ -17,7 +17,6 @@
 package org.jetbrains.kotlin.incremental
 
 import org.jetbrains.annotations.TestOnly
-import org.jetbrains.kotlin.config.IncrementalCompilation
 import org.jetbrains.kotlin.metadata.jvm.deserialization.JvmBytecodeBinaryVersion
 import org.jetbrains.kotlin.metadata.jvm.deserialization.JvmMetadataVersion
 import java.io.File
@@ -29,16 +28,22 @@ private val DATA_CONTAINER_VERSION = 3
 private val NORMAL_VERSION_FILE_NAME = "format-version.txt"
 private val DATA_CONTAINER_VERSION_FILE_NAME = "data-container-format-version.txt"
 
-class CacheVersion(
-        private val ownVersion: Int,
-        private val versionFile: File,
-        private val whenVersionChanged: CacheVersion.Action,
-        private val whenTurnedOn: CacheVersion.Action,
-        private val whenTurnedOff: CacheVersion.Action,
-        private val isEnabled: Boolean
-) {
+enum class CacheStatus {
+    VALID, INVALID, SHOULD_BE_CLEARED, CLEARED
+}
 
-    private val actualVersion: Int?
+class CacheVersion(
+    private val ownVersion: Int,
+    private val versionFile: File,
+    private val whenVersionChanged: CacheVersion.Action,
+    private val whenTurnedOn: CacheVersion.Action,
+    private val whenTurnedOff: CacheVersion.Action,
+    val isEnabled: Boolean
+) {
+    val wasEnabled: Boolean
+        get() = versionFile.exists()
+
+    val actualVersion: Int?
         get() = try {
             versionFile.readText().toInt()
         }
@@ -49,7 +54,7 @@ class CacheVersion(
             null
         }
 
-    private val expectedVersion: Int
+    val expectedVersion: Int
         get() {
             val metadata = JvmMetadataVersion.INSTANCE
             val bytecode = JvmBytecodeBinaryVersion.INSTANCE
@@ -58,8 +63,16 @@ class CacheVersion(
                    metadata.major * 1000 + metadata.minor
         }
 
+    val status: CacheStatus = if (isEnabled) {
+        if (wasEnabled && expectedVersion == actualVersion) CacheStatus.VALID
+        else CacheStatus.INVALID
+    } else {
+        if (wasEnabled) CacheStatus.SHOULD_BE_CLEARED
+        else CacheStatus.VALID
+    }
+
     fun checkVersion(): Action =
-            when (versionFile.exists() to isEnabled) {
+        when (wasEnabled to isEnabled) {
                 true  to true -> if (actualVersion != expectedVersion) whenVersionChanged else Action.DO_NOTHING
                 false to true -> whenTurnedOn
                 true  to false -> whenTurnedOff

@@ -254,6 +254,9 @@ class KotlinJvmModuleBuildTarget(compileContext: CompileContext, jpsModuleBuildT
         updateIncrementalCache(files, jpsIncrementalCache as IncrementalJvmCache, changesCollector, null)
     }
 
+    override val globalLookupCacheId: String
+        get() = "jvm"
+
     override fun updateChunkMappings(
         chunk: ModuleChunk,
         dirtyFilesHolder: KotlinDirtySourceFilesHolder,

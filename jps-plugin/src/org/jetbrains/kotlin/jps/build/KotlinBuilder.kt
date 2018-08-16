@@ -27,6 +27,7 @@ import org.jetbrains.jps.builders.java.JavaBuilderUtil
 import org.jetbrains.jps.builders.java.JavaSourceRootDescriptor
 import org.jetbrains.jps.incremental.*
 import org.jetbrains.jps.incremental.ModuleLevelBuilder.ExitCode.*
+import org.jetbrains.jps.incremental.fs.CompilationRound
 import org.jetbrains.jps.incremental.java.JavaBuilder
 import org.jetbrains.jps.incremental.storage.BuildDataManager
 import org.jetbrains.jps.model.JpsProject
@@ -105,9 +106,160 @@ class KotlinBuilder : ModuleLevelBuilder(BuilderCategory.SOURCE_PROCESSOR) {
         if (historyLabel != null) {
             LOG.info("Label in local history: $historyLabel")
         }
+
+        val shouldCheckCacheVersions = System.getProperty(SKIP_CACHE_VERSION_CHECK_PROPERTY) == null
+        if (shouldCheckCacheVersions) checkCacheVersions(context)
     }
 
-    override fun buildFinished(context: CompileContext?) {
+    private fun checkCacheVersions(context: CompileContext) {
+        val dataManager = context.projectDescriptor.dataManager
+        val dataPaths = dataManager.dataPaths
+        val globalCacheRootPath = dataPaths.getTargetDataRoot(KotlinDataContainerTarget)
+
+        val allKotlinChunks = mutableListOf<List<KotlinModuleBuildTarget<*>>>()
+        val expectedGlobalCacheComponents = mutableSetOf<String>()
+
+        // visit all kotlin build targets, and collect globalLookupCacheIds (jvm, js)
+        context.projectDescriptor.buildTargetIndex.getSortedTargetChunks(context).forEach { chunk ->
+            val moduleBuildTargets = chunk.targets.mapNotNull {
+                if (it is ModuleBuildTarget) context.kotlinBuildTargets[it]!!
+                else null
+            }
+
+            if (moduleBuildTargets.isNotEmpty()) {
+                allKotlinChunks.add(moduleBuildTargets)
+                moduleBuildTargets.forEach {
+                    expectedGlobalCacheComponents.add(it.globalLookupCacheId)
+                }
+            }
+        }
+
+        val globalCacheVersion = GlobalCacheVersion(globalCacheRootPath, expectedGlobalCacheComponents)
+
+        when (globalCacheVersion.status) {
+            CacheStatus.INVALID -> {
+                // global cache needs to be rebuilt
+                markAllKotlinForRebuildBeforeBuild(context, "Kotlin global lookup map format changed")
+            }
+            CacheStatus.VALID -> {
+                // global cache is enabled and valid
+                // let check local module caches
+                allKotlinChunks.forEach { chunkTargets ->
+                    if (shouldRebuildChunkCaches(chunkTargets, dataManager)) {
+                        rebuildChunkBeforeBuild(context, chunkTargets)
+                    }
+                }
+            }
+            CacheStatus.SHOULD_BE_CLEARED -> clearAllCaches(dataManager, globalCacheVersion, allKotlinChunks)
+            CacheStatus.CLEARED -> Unit
+        }
+    }
+
+    private fun markAllKotlinForRebuildBeforeBuild(context: CompileContext, reason: String) {
+        LOG.info("Rebuilding all Kotlin: $reason")
+
+        val dataManager = context.projectDescriptor.dataManager
+        val rebuildAfterCacheVersionChanged = RebuildAfterCacheVersionChangeMarker(dataManager)
+        val hasKotlinMarker = HasKotlinMarker(dataManager)
+
+        context.projectDescriptor.buildTargetIndex.allTargets.forEach { target ->
+            if (target is ModuleBuildTarget) {
+                val kotlinTarget = context.kotlinBuildTargets[target]!!
+
+                FSOperations.markDirty(context, CompilationRound.NEXT, target) { file ->
+                    file.isKotlinSourceFile
+                }
+
+                hasKotlinMarker.clean(target)
+                dataManager.getKotlinCache(kotlinTarget)?.clean()
+                rebuildAfterCacheVersionChanged[target] = true
+            }
+        }
+
+        dataManager.cleanLookupStorage(LOG)
+    }
+
+    private fun rebuildChunkBeforeBuild(
+        context: CompileContext,
+        chunkTargets: List<KotlinModuleBuildTarget<*>>
+    ) {
+        val dataManager = context.projectDescriptor.dataManager
+        val hasKotlinMarker = HasKotlinMarker(dataManager)
+        val rebuildAfterCacheVersionChanged = RebuildAfterCacheVersionChangeMarker(dataManager)
+
+        chunkTargets.forEach {
+            FSOperations.markDirty(context, CompilationRound.NEXT, it.jpsModuleBuildTarget) { file ->
+                file.isKotlinSourceFile
+            }
+
+            dataManager.getKotlinCache(it)?.clean()
+            hasKotlinMarker.clean(it.jpsModuleBuildTarget)
+            rebuildAfterCacheVersionChanged[it.jpsModuleBuildTarget] = true
+        }
+    }
+
+    fun clearAllCaches(
+        dataManager: BuildDataManager,
+        globalCacheVersion: GlobalCacheVersion,
+        allKotlinChunks: MutableList<List<KotlinModuleBuildTarget<*>>>
+    ) {
+        LOG.info("Clearing lookup cache")
+        dataManager.cleanLookupStorage(LOG)
+        globalCacheVersion.clean()
+
+        LOG.info("Clearing caches for all targets")
+        allKotlinChunks.forEach { chunkTargets ->
+            chunkTargets.forEach {
+                dataManager.getKotlinCache(it)?.clean()
+            }
+        }
+    }
+
+    private fun shouldRebuildChunkCaches(
+        chunkTargets: List<KotlinModuleBuildTarget<*>>,
+        dataManager: BuildDataManager
+    ): Boolean {
+        val representativeTarget = chunkTargets.first()
+        val cacheVersionsProvider = CacheVersionProvider(dataManager.dataPaths, representativeTarget)
+
+        chunkTargets.forEach {
+            val targetCacheVersion = cacheVersionsProvider.normalVersion(it.jpsModuleBuildTarget)
+
+            when (targetCacheVersion.status) {
+                CacheStatus.INVALID -> return true
+                CacheStatus.VALID -> Unit
+                CacheStatus.SHOULD_BE_CLEARED -> dataManager.getKotlinCache(it)?.clean()
+                CacheStatus.CLEARED -> Unit
+            }
+        }
+
+        return false
+    }
+
+    override fun buildFinished(context: CompileContext) {
+        // TODO: save in context
+        val dataManager = context.projectDescriptor.dataManager
+        val dataPaths = dataManager.dataPaths
+        val globalCacheRootPath = dataPaths.getTargetDataRoot(KotlinDataContainerTarget)
+
+        val expectedGlobalCacheComponents = mutableSetOf<String>()
+
+        context.projectDescriptor.buildTargetIndex.getSortedTargetChunks(context).forEach { chunk ->
+            val moduleBuildTargets = chunk.targets.mapNotNull {
+                if (it is ModuleBuildTarget) context.kotlinBuildTargets[it]!!
+                else null
+            }
+
+            if (moduleBuildTargets.isNotEmpty()) {
+                moduleBuildTargets.forEach {
+                    expectedGlobalCacheComponents.add(it.globalLookupCacheId)
+                }
+            }
+        }
+
+        val globalCacheVersion = GlobalCacheVersion(globalCacheRootPath, expectedGlobalCacheComponents)
+        globalCacheVersion.saveIfNeeded()
+
         statisticsLogger.reportTotal()
     }
 
@@ -138,20 +290,6 @@ class KotlinBuilder : ModuleLevelBuilder(BuilderCategory.SOURCE_PROCESSOR) {
         )
         val fsOperations = FSOperationsHelper(context, chunk, roundDirtyFiles, LOG)
 
-        val jpsRepresentativeTarget = chunk.representativeTarget()
-        val representativeTarget = context.kotlinBuildTargets[jpsRepresentativeTarget]
-        if (representativeTarget == null) {
-            LOG.warn("Unable to find Kotlin build target for JPS target ${jpsRepresentativeTarget.presentableName}")
-        }
-        if (System.getProperty(SKIP_CACHE_VERSION_CHECK_PROPERTY) == null && representativeTarget != null) {
-            val cacheVersionsProvider = CacheVersionProvider(dataManager.dataPaths, representativeTarget.isIncrementalCompilationEnabled)
-            val actions = checkCachesVersions(context, cacheVersionsProvider, chunk)
-            applyActionsOnCacheVersionChange(actions, cacheVersionsProvider, context, dataManager, targets, fsOperations)
-            if (CacheVersion.Action.REBUILD_ALL_KOTLIN in actions) {
-                return
-            }
-        }
-
         // try to perform a lookup
         // request rebuild if storage is corrupted
         try {
@@ -161,7 +299,7 @@ class KotlinBuilder : ModuleLevelBuilder(BuilderCategory.SOURCE_PROCESSOR) {
         } catch (e: Exception) {
             // todo: report to Intellij when IDEA-187115 is implemented
             LOG.info(e)
-            markAllKotlinForRebuild(context, fsOperations, "Lookup storage is corrupted")
+            markAllKotlinForRebuildBeforeBuild(context, "Lookup storage is corrupted")
             return
         }
 
@@ -209,23 +347,6 @@ class KotlinBuilder : ModuleLevelBuilder(BuilderCategory.SOURCE_PROCESSOR) {
         val affectedByRemovedClasses = changesCollector.getDirtyFiles(incrementalCaches.values, context.projectDescriptor.dataManager)
 
         fsOperations.markFilesForCurrentRound(affectedByRemovedClasses)
-    }
-
-    private fun checkCachesVersions(
-        context: CompileContext,
-        cacheVersionsProvider: CacheVersionProvider,
-        chunk: ModuleChunk
-    ): Set<CacheVersion.Action> {
-        val targets = chunk.targets
-        val dataManager = context.projectDescriptor.dataManager
-
-        val allVersions = cacheVersionsProvider.allVersions(targets)
-        val actions = allVersions.map { it.checkVersion() }.toMutableSet()
-
-        val kotlinModuleBuilderTarget = context.kotlinBuildTargets[chunk.representativeTarget()]!!
-        kotlinModuleBuilderTarget.checkCachesVersions(chunk, dataManager, actions)
-
-        return actions
     }
 
     override fun chunkBuildFinished(context: CompileContext, chunk: ModuleChunk) {
@@ -427,83 +548,8 @@ class KotlinBuilder : ModuleLevelBuilder(BuilderCategory.SOURCE_PROCESSOR) {
         return OK
     }
 
-    private fun applyActionsOnCacheVersionChange(
-        actions: Set<CacheVersion.Action>,
-        cacheVersionsProvider: CacheVersionProvider,
-        context: CompileContext,
-        dataManager: BuildDataManager,
-        targets: MutableSet<ModuleBuildTarget>,
-        fsOperations: FSOperationsHelper
-    ) {
-        val hasKotlin = HasKotlinMarker(dataManager)
-        val sortedActions = actions.sorted()
-
-        context.testingContext?.buildLogger?.actionsOnCacheVersionChanged(sortedActions)
-
-        for (status in sortedActions) {
-            when (status) {
-                CacheVersion.Action.REBUILD_ALL_KOTLIN -> {
-                    markAllKotlinForRebuild(context, fsOperations, "Kotlin global lookup map format changed")
-                    return
-                }
-                CacheVersion.Action.REBUILD_CHUNK -> {
-                    LOG.info("Clearing caches for " + targets.joinToString { it.presentableName })
-                    val rebuildAfterCacheVersionChanged = RebuildAfterCacheVersionChangeMarker(dataManager)
-
-                    val kotlinBuildTargets = context.kotlinBuildTargets
-                    for (target in targets) {
-                        dataManager.getKotlinCache(kotlinBuildTargets[target])?.clean()
-                        hasKotlin.clean(target)
-                        rebuildAfterCacheVersionChanged[target] = true
-                    }
-
-                    fsOperations.markChunk(recursively = false, kotlinOnly = true)
-
-                    return
-                }
-                CacheVersion.Action.CLEAN_NORMAL_CACHES -> {
-                    LOG.info("Clearing caches for all targets")
-
-                    val kotlinBuildTargets = context.kotlinBuildTargets
-                    for (target in context.allTargets()) {
-                        dataManager.getKotlinCache(kotlinBuildTargets[target])?.clean()
-                    }
-                }
-                CacheVersion.Action.CLEAN_DATA_CONTAINER -> {
-                    LOG.info("Clearing lookup cache")
-                    dataManager.cleanLookupStorage(LOG)
-                    cacheVersionsProvider.dataContainerVersion().clean()
-                }
-                else -> {
-                    assert(status == CacheVersion.Action.DO_NOTHING) { "Unknown version status $status" }
-                }
-            }
-        }
-    }
-
     private fun CompileContext.allTargets() =
         projectDescriptor.buildTargetIndex.allTargets.filterIsInstanceTo<ModuleBuildTarget, MutableSet<ModuleBuildTarget>>(HashSet())
-
-    private fun markAllKotlinForRebuild(context: CompileContext, fsOperations: FSOperationsHelper, reason: String) {
-        LOG.info("Rebuilding all Kotlin: $reason")
-        val project = context.projectDescriptor.project
-        val sourceRoots = project.modules.flatMap { it.sourceRoots }
-        val dataManager = context.projectDescriptor.dataManager
-        val rebuildAfterCacheVersionChanged = RebuildAfterCacheVersionChangeMarker(dataManager)
-
-        for (sourceRoot in sourceRoots) {
-            val ktFiles = sourceRoot.file.walk().filter { it.isKotlinSourceFile }
-            fsOperations.markFiles(ktFiles.toList())
-        }
-
-        val kotlinBuildTargets = context.kotlinBuildTargets
-        for (target in context.allTargets()) {
-            dataManager.getKotlinCache(kotlinBuildTargets[target])?.clean()
-            rebuildAfterCacheVersionChanged[target] = true
-        }
-
-        dataManager.cleanLookupStorage(LOG)
-    }
 
     private fun doCompileModuleChunk(
         chunk: ModuleChunk,
