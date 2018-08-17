@@ -186,7 +186,7 @@ open class PropertiesCollection(val properties: Map<Key<*>, Any> = emptyMap()) {
         // include another builder extension
         operator fun <T : Builder> BuilderExtension<T>.invoke(body: T.() -> Unit) {
             val builder = this.get().apply(body)
-            builder.data.putAll(this@Builder.data)
+            this@Builder.data.putAll(builder.data)
         }
     }
 }
@@ -203,16 +203,3 @@ fun <T> getFirstFromChainOrNull(key: PropertiesCollection.Key<T>, vararg propert
     return key.defaultValue
 }
 
-@Suppress("UNCHECKED_CAST")
-fun <T> getMergedFromChainOrNull(key: PropertiesCollection.Key<List<T>>, vararg propertyCollections: PropertiesCollection?): List<T>? {
-    var found = false
-    val res = ArrayList<T>()
-    for (collection in propertyCollections) {
-        val value = collection?.properties?.get(key)
-        if (value != null) {
-            found = true
-            res.addAll(value as List<T>)
-        }
-    }
-    return if (found) res else key.defaultValue
-}
