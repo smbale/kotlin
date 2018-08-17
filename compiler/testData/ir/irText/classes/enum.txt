@@ -37,14 +37,12 @@ FILE fqName:<root> fileName:/enum.kt
         FUN IR_EXTERNAL_DECLARATION_STUB name:hashCode visibility:public modality:FINAL <> ($this:kotlin.Enum<E>) returnType:kotlin.Int flags:
       $this: VALUE_PARAMETER name:<this> type:kotlin.Enum<TestEnum1> flags:
     PROPERTY FAKE_OVERRIDE name:name visibility:public modality:FINAL flags:val
-      FIELD FAKE_OVERRIDE name:name type:kotlin.String visibility:public flags:final
       FUN FAKE_OVERRIDE name:<get-name> visibility:public modality:FINAL <> ($this:kotlin.Enum<TestEnum1>) returnType:kotlin.String flags:
         correspondingProperty: PROPERTY FAKE_OVERRIDE name:name visibility:public modality:FINAL flags:val
         overridden:
           FUN IR_EXTERNAL_DECLARATION_STUB name:<get-name> visibility:public modality:FINAL <> ($this:kotlin.Enum<E>) returnType:kotlin.String flags:
         $this: VALUE_PARAMETER name:<this> type:kotlin.Enum<TestEnum1> flags:
     PROPERTY FAKE_OVERRIDE name:ordinal visibility:public modality:FINAL flags:val
-      FIELD FAKE_OVERRIDE name:ordinal type:kotlin.Int visibility:public flags:final
       FUN FAKE_OVERRIDE name:<get-ordinal> visibility:public modality:FINAL <> ($this:kotlin.Enum<TestEnum1>) returnType:kotlin.Int flags:
         correspondingProperty: PROPERTY FAKE_OVERRIDE name:ordinal visibility:public modality:FINAL flags:val
         overridden:
@@ -114,14 +112,12 @@ FILE fqName:<root> fileName:/enum.kt
         FUN IR_EXTERNAL_DECLARATION_STUB name:hashCode visibility:public modality:FINAL <> ($this:kotlin.Enum<E>) returnType:kotlin.Int flags:
       $this: VALUE_PARAMETER name:<this> type:kotlin.Enum<TestEnum2> flags:
     PROPERTY FAKE_OVERRIDE name:name visibility:public modality:FINAL flags:val
-      FIELD FAKE_OVERRIDE name:name type:kotlin.String visibility:public flags:final
       FUN FAKE_OVERRIDE name:<get-name> visibility:public modality:FINAL <> ($this:kotlin.Enum<TestEnum2>) returnType:kotlin.String flags:
         correspondingProperty: PROPERTY FAKE_OVERRIDE name:name visibility:public modality:FINAL flags:val
         overridden:
           FUN IR_EXTERNAL_DECLARATION_STUB name:<get-name> visibility:public modality:FINAL <> ($this:kotlin.Enum<E>) returnType:kotlin.String flags:
         $this: VALUE_PARAMETER name:<this> type:kotlin.Enum<TestEnum2> flags:
     PROPERTY FAKE_OVERRIDE name:ordinal visibility:public modality:FINAL flags:val
-      FIELD FAKE_OVERRIDE name:ordinal type:kotlin.Int visibility:public flags:final
       FUN FAKE_OVERRIDE name:<get-ordinal> visibility:public modality:FINAL <> ($this:kotlin.Enum<TestEnum2>) returnType:kotlin.Int flags:
         correspondingProperty: PROPERTY FAKE_OVERRIDE name:ordinal visibility:public modality:FINAL flags:val
         overridden:
@@ -187,14 +183,12 @@ FILE fqName:<root> fileName:/enum.kt
             FUN FAKE_OVERRIDE name:hashCode visibility:public modality:FINAL <> ($this:kotlin.Enum<TestEnum3>) returnType:kotlin.Int flags:
           $this: VALUE_PARAMETER name:<this> type:kotlin.Enum<TestEnum3> flags:
         PROPERTY FAKE_OVERRIDE name:name visibility:public modality:FINAL flags:val
-          FIELD FAKE_OVERRIDE name:name type:kotlin.String visibility:public flags:final
           FUN FAKE_OVERRIDE name:<get-name> visibility:public modality:FINAL <> ($this:kotlin.Enum<TestEnum3>) returnType:kotlin.String flags:
             correspondingProperty: PROPERTY FAKE_OVERRIDE name:name visibility:public modality:FINAL flags:val
             overridden:
               FUN FAKE_OVERRIDE name:<get-name> visibility:public modality:FINAL <> ($this:kotlin.Enum<TestEnum3>) returnType:kotlin.String flags:
             $this: VALUE_PARAMETER name:<this> type:kotlin.Enum<TestEnum3> flags:
         PROPERTY FAKE_OVERRIDE name:ordinal visibility:public modality:FINAL flags:val
-          FIELD FAKE_OVERRIDE name:ordinal type:kotlin.Int visibility:public flags:final
           FUN FAKE_OVERRIDE name:<get-ordinal> visibility:public modality:FINAL <> ($this:kotlin.Enum<TestEnum3>) returnType:kotlin.Int flags:
             correspondingProperty: PROPERTY FAKE_OVERRIDE name:ordinal visibility:public modality:FINAL flags:val
             overridden:
@@ -233,14 +227,12 @@ FILE fqName:<root> fileName:/enum.kt
         FUN IR_EXTERNAL_DECLARATION_STUB name:hashCode visibility:public modality:FINAL <> ($this:kotlin.Enum<E>) returnType:kotlin.Int flags:
       $this: VALUE_PARAMETER name:<this> type:kotlin.Enum<TestEnum3> flags:
     PROPERTY FAKE_OVERRIDE name:name visibility:public modality:FINAL flags:val
-      FIELD FAKE_OVERRIDE name:name type:kotlin.String visibility:public flags:final
       FUN FAKE_OVERRIDE name:<get-name> visibility:public modality:FINAL <> ($this:kotlin.Enum<TestEnum3>) returnType:kotlin.String flags:
         correspondingProperty: PROPERTY FAKE_OVERRIDE name:name visibility:public modality:FINAL flags:val
         overridden:
           FUN IR_EXTERNAL_DECLARATION_STUB name:<get-name> visibility:public modality:FINAL <> ($this:kotlin.Enum<E>) returnType:kotlin.String flags:
         $this: VALUE_PARAMETER name:<this> type:kotlin.Enum<TestEnum3> flags:
     PROPERTY FAKE_OVERRIDE name:ordinal visibility:public modality:FINAL flags:val
-      FIELD FAKE_OVERRIDE name:ordinal type:kotlin.Int visibility:public flags:final
       FUN FAKE_OVERRIDE name:<get-ordinal> visibility:public modality:FINAL <> ($this:kotlin.Enum<TestEnum3>) returnType:kotlin.Int flags:
         correspondingProperty: PROPERTY FAKE_OVERRIDE name:ordinal visibility:public modality:FINAL flags:val
         overridden:
@@ -319,14 +311,12 @@ FILE fqName:<root> fileName:/enum.kt
             FUN FAKE_OVERRIDE name:hashCode visibility:public modality:FINAL <> ($this:kotlin.Enum<TestEnum4>) returnType:kotlin.Int flags:
           $this: VALUE_PARAMETER name:<this> type:kotlin.Enum<TestEnum4> flags:
         PROPERTY FAKE_OVERRIDE name:name visibility:public modality:FINAL flags:val
-          FIELD FAKE_OVERRIDE name:name type:kotlin.String visibility:public flags:final
           FUN FAKE_OVERRIDE name:<get-name> visibility:public modality:FINAL <> ($this:kotlin.Enum<TestEnum4>) returnType:kotlin.String flags:
             correspondingProperty: PROPERTY FAKE_OVERRIDE name:name visibility:public modality:FINAL flags:val
             overridden:
               FUN FAKE_OVERRIDE name:<get-name> visibility:public modality:FINAL <> ($this:kotlin.Enum<TestEnum4>) returnType:kotlin.String flags:
             $this: VALUE_PARAMETER name:<this> type:kotlin.Enum<TestEnum4> flags:
         PROPERTY FAKE_OVERRIDE name:ordinal visibility:public modality:FINAL flags:val
-          FIELD FAKE_OVERRIDE name:ordinal type:kotlin.Int visibility:public flags:final
           FUN FAKE_OVERRIDE name:<get-ordinal> visibility:public modality:FINAL <> ($this:kotlin.Enum<TestEnum4>) returnType:kotlin.Int flags:
             correspondingProperty: PROPERTY FAKE_OVERRIDE name:ordinal visibility:public modality:FINAL flags:val
             overridden:
@@ -403,14 +393,12 @@ FILE fqName:<root> fileName:/enum.kt
             FUN FAKE_OVERRIDE name:hashCode visibility:public modality:FINAL <> ($this:kotlin.Enum<TestEnum4>) returnType:kotlin.Int flags:
           $this: VALUE_PARAMETER name:<this> type:kotlin.Enum<TestEnum4> flags:
         PROPERTY FAKE_OVERRIDE name:name visibility:public modality:FINAL flags:val
-          FIELD FAKE_OVERRIDE name:name type:kotlin.String visibility:public flags:final
           FUN FAKE_OVERRIDE name:<get-name> visibility:public modality:FINAL <> ($this:kotlin.Enum<TestEnum4>) returnType:kotlin.String flags:
             correspondingProperty: PROPERTY FAKE_OVERRIDE name:name visibility:public modality:FINAL flags:val
             overridden:
               FUN FAKE_OVERRIDE name:<get-name> visibility:public modality:FINAL <> ($this:kotlin.Enum<TestEnum4>) returnType:kotlin.String flags:
             $this: VALUE_PARAMETER name:<this> type:kotlin.Enum<TestEnum4> flags:
         PROPERTY FAKE_OVERRIDE name:ordinal visibility:public modality:FINAL flags:val
-          FIELD FAKE_OVERRIDE name:ordinal type:kotlin.Int visibility:public flags:final
           FUN FAKE_OVERRIDE name:<get-ordinal> visibility:public modality:FINAL <> ($this:kotlin.Enum<TestEnum4>) returnType:kotlin.Int flags:
             correspondingProperty: PROPERTY FAKE_OVERRIDE name:ordinal visibility:public modality:FINAL flags:val
             overridden:
@@ -456,14 +444,12 @@ FILE fqName:<root> fileName:/enum.kt
         FUN IR_EXTERNAL_DECLARATION_STUB name:hashCode visibility:public modality:FINAL <> ($this:kotlin.Enum<E>) returnType:kotlin.Int flags:
       $this: VALUE_PARAMETER name:<this> type:kotlin.Enum<TestEnum4> flags:
     PROPERTY FAKE_OVERRIDE name:name visibility:public modality:FINAL flags:val
-      FIELD FAKE_OVERRIDE name:name type:kotlin.String visibility:public flags:final
       FUN FAKE_OVERRIDE name:<get-name> visibility:public modality:FINAL <> ($this:kotlin.Enum<TestEnum4>) returnType:kotlin.String flags:
         correspondingProperty: PROPERTY FAKE_OVERRIDE name:name visibility:public modality:FINAL flags:val
         overridden:
           FUN IR_EXTERNAL_DECLARATION_STUB name:<get-name> visibility:public modality:FINAL <> ($this:kotlin.Enum<E>) returnType:kotlin.String flags:
         $this: VALUE_PARAMETER name:<this> type:kotlin.Enum<TestEnum4> flags:
     PROPERTY FAKE_OVERRIDE name:ordinal visibility:public modality:FINAL flags:val
-      FIELD FAKE_OVERRIDE name:ordinal type:kotlin.Int visibility:public flags:final
       FUN FAKE_OVERRIDE name:<get-ordinal> visibility:public modality:FINAL <> ($this:kotlin.Enum<TestEnum4>) returnType:kotlin.Int flags:
         correspondingProperty: PROPERTY FAKE_OVERRIDE name:ordinal visibility:public modality:FINAL flags:val
         overridden:
@@ -533,14 +519,12 @@ FILE fqName:<root> fileName:/enum.kt
         FUN IR_EXTERNAL_DECLARATION_STUB name:hashCode visibility:public modality:FINAL <> ($this:kotlin.Enum<E>) returnType:kotlin.Int flags:
       $this: VALUE_PARAMETER name:<this> type:kotlin.Enum<TestEnum5> flags:
     PROPERTY FAKE_OVERRIDE name:name visibility:public modality:FINAL flags:val
-      FIELD FAKE_OVERRIDE name:name type:kotlin.String visibility:public flags:final
       FUN FAKE_OVERRIDE name:<get-name> visibility:public modality:FINAL <> ($this:kotlin.Enum<TestEnum5>) returnType:kotlin.String flags:
         correspondingProperty: PROPERTY FAKE_OVERRIDE name:name visibility:public modality:FINAL flags:val
         overridden:
           FUN IR_EXTERNAL_DECLARATION_STUB name:<get-name> visibility:public modality:FINAL <> ($this:kotlin.Enum<E>) returnType:kotlin.String flags:
         $this: VALUE_PARAMETER name:<this> type:kotlin.Enum<TestEnum5> flags:
     PROPERTY FAKE_OVERRIDE name:ordinal visibility:public modality:FINAL flags:val
-      FIELD FAKE_OVERRIDE name:ordinal type:kotlin.Int visibility:public flags:final
       FUN FAKE_OVERRIDE name:<get-ordinal> visibility:public modality:FINAL <> ($this:kotlin.Enum<TestEnum5>) returnType:kotlin.Int flags:
         correspondingProperty: PROPERTY FAKE_OVERRIDE name:ordinal visibility:public modality:FINAL flags:val
         overridden:
@@ -555,4 +539,3 @@ FILE fqName:<root> fileName:/enum.kt
     FUN ENUM_CLASS_SPECIAL_MEMBER name:valueOf visibility:public modality:FINAL <> (value:kotlin.String) returnType:TestEnum5 flags:
       VALUE_PARAMETER name:value index:0 type:kotlin.String flags:
       SYNTHETIC_BODY kind=ENUM_VALUEOF
-

@@ -64,7 +64,6 @@ FILE fqName:<root> fileName:/genericClassInDifferentModule_m2.kt
         VALUE_PARAMETER name:value index:0 type:T flags:
         BLOCK_BODY
     PROPERTY FAKE_OVERRIDE name:x visibility:public modality:FINAL flags:val
-      FIELD FAKE_OVERRIDE name:x type:T visibility:public flags:final
       FUN FAKE_OVERRIDE name:<get-x> visibility:public modality:FINAL <> ($this:Base<T>) returnType:T flags:
         correspondingProperty: PROPERTY FAKE_OVERRIDE name:x visibility:public modality:FINAL flags:val
         overridden:

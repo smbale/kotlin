@@ -92,7 +92,6 @@ FILE fqName:<root> fileName:/thisOfGenericOuterClass.kt
                     GET_FIELD 'xx: Int' type=kotlin.Int origin=null
                       receiver: GET_VAR 'this@<no name provided>: <no name provided>' type=test.<no name provided> origin=null
             PROPERTY FAKE_OVERRIDE name:y visibility:public modality:FINAL flags:val
-              FIELD FAKE_OVERRIDE name:y type:kotlin.Int visibility:public flags:final
               FUN FAKE_OVERRIDE name:<get-y> visibility:public modality:FINAL <> ($this:Outer<kotlin.Int>.Inner) returnType:kotlin.Int flags:
                 correspondingProperty: PROPERTY FAKE_OVERRIDE name:y visibility:public modality:FINAL flags:val
                 overridden:
