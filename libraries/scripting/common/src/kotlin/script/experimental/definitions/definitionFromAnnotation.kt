@@ -14,7 +14,7 @@ import kotlin.script.experimental.api.*
 private const val ERROR_MSG_PREFIX = "Unable to construct script definition: "
 
 private const val ILLEGAL_CONFIG_ANN_ARG =
-    "Illegal argument to KotlinScriptDefaultCompilationConfiguration annotation: expecting List-derived object or default-constructed class of configuration parameters"
+    "Illegal definition argument to KotlinScript annotation: expecting ScriptDefinition-derived object or default-constructable class"
 
 fun createScriptDefinitionFromAnnotatedBaseClass(
     baseClassType: KotlinType,
