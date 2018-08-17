@@ -21,8 +21,6 @@ import org.junit.Assert
 import java.io.File
 import kotlin.script.experimental.annotations.KotlinScript
 import kotlin.script.experimental.api.ScriptDefinition
-import kotlin.script.experimental.api.contextVariables
-import kotlin.script.experimental.api.scriptImplicitReceivers
 
 abstract class AbstractCustomScriptCodegenTest : CodegenTestCase() {
     private lateinit var scriptDefinitions: List<String>
