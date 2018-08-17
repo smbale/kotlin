@@ -28,6 +28,8 @@ import org.jetbrains.kotlin.incremental.js.IncrementalDataProviderFromCache
 import org.jetbrains.kotlin.incremental.js.IncrementalResultsConsumer
 import org.jetbrains.kotlin.incremental.js.IncrementalResultsConsumerImpl
 import org.jetbrains.kotlin.jps.build.KotlinDirtySourceFilesHolder
+import org.jetbrains.kotlin.jps.build.ModuleBuildTarget
+import org.jetbrains.kotlin.jps.build.kotlinCompilation
 import org.jetbrains.kotlin.jps.incremental.JpsIncrementalCache
 import org.jetbrains.kotlin.jps.incremental.JpsIncrementalJsCache
 import org.jetbrains.kotlin.jps.model.k2JsCompilerArguments
@@ -190,7 +192,7 @@ class KotlinJsModuleBuildTarget(compileContext: CompileContext, jpsModuleBuildTa
         result: MutableList<String>,
         isTests: Boolean
     ) {
-        val dependencyBuildTarget = context.kotlinBuildTargets[ModuleBuildTarget(module, isTests)]
+        val dependencyBuildTarget = context.kotlinCompilation.targetsBinding[ModuleBuildTarget(module, isTests)]
 
         if (dependencyBuildTarget != this@KotlinJsModuleBuildTarget &&
             dependencyBuildTarget is KotlinJsModuleBuildTarget &&

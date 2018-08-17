@@ -10,7 +10,6 @@ import org.jetbrains.jps.builders.storage.BuildDataPaths
 import org.jetbrains.jps.incremental.CompileContext
 import org.jetbrains.jps.incremental.ModuleBuildTarget
 import org.jetbrains.jps.incremental.ProjectBuildException
-import org.jetbrains.jps.incremental.storage.BuildDataManager
 import org.jetbrains.jps.model.java.JpsJavaClasspathKind
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.model.module.JpsModule
@@ -24,18 +23,14 @@ import org.jetbrains.kotlin.compilerRunner.JpsCompilerEnvironment
 import org.jetbrains.kotlin.config.ApiVersion
 import org.jetbrains.kotlin.config.LanguageVersion
 import org.jetbrains.kotlin.config.Services
-import org.jetbrains.kotlin.incremental.CacheVersion
+import org.jetbrains.kotlin.incremental.CacheAttributesDiff
 import org.jetbrains.kotlin.incremental.ChangesCollector
 import org.jetbrains.kotlin.incremental.ExpectActualTrackerImpl
 import org.jetbrains.kotlin.incremental.components.ExpectActualTracker
 import org.jetbrains.kotlin.incremental.components.LookupTracker
-import org.jetbrains.kotlin.jps.build.KotlinBuilder
-import org.jetbrains.kotlin.jps.build.KotlinIncludedModuleSourceRoot
-import org.jetbrains.kotlin.jps.build.KotlinDirtySourceFilesHolder
-import org.jetbrains.kotlin.jps.build.isKotlinSourceFile
+import org.jetbrains.kotlin.jps.build.*
 import org.jetbrains.kotlin.jps.incremental.CacheVersionProvider
 import org.jetbrains.kotlin.jps.incremental.JpsIncrementalCache
-import org.jetbrains.kotlin.jps.model.kotlinCompilerArguments
 import org.jetbrains.kotlin.jps.model.productionOutputFilePath
 import org.jetbrains.kotlin.jps.model.testOutputFilePath
 import org.jetbrains.kotlin.modules.TargetId
@@ -51,9 +46,20 @@ abstract class KotlinModuleBuildTarget<BuildMetaInfoType : BuildMetaInfo>(
     val context: CompileContext,
     val jpsModuleBuildTarget: ModuleBuildTarget
 ) {
+    // TODO(1.2.80): got rid of context and replace it with kotlinContext
+    val kotlinContext: KotlinCompilation
+        get() = context.kotlinCompilation
+
     abstract val globalLookupCacheId: String
 
+    val initialLocalCacheAttributesDiff: CacheAttributesDiff
+
     abstract val isIncrementalCompilationEnabled: Boolean
+
+    init {
+        initialLocalCacheAttributesDiff = CacheVersionProvider(kotlinContext.dataPaths, isIncrementalCompilationEnabled)
+            .readLocalCacheStatus(jpsModuleBuildTarget)
+    }
 
     val module: JpsModule
         get() = jpsModuleBuildTarget.module
@@ -182,9 +188,6 @@ abstract class KotlinModuleBuildTarget<BuildMetaInfoType : BuildMetaInfo>(
         return false
     }
 
-    fun compilerArgumentsForChunk(chunk: ModuleChunk): CommonCompilerArguments =
-        chunk.representativeTarget().module.kotlinCompilerArguments
-
     open fun doAfterBuild() {
     }
 
@@ -277,66 +280,48 @@ abstract class KotlinModuleBuildTarget<BuildMetaInfoType : BuildMetaInfo>(
 
     abstract val buildMetaInfoFileName: String
 
-    fun buildMetaInfoFile(target: ModuleBuildTarget, dataManager: BuildDataManager): File =
-        File(dataManager.dataPaths.getTargetDataRoot(target), buildMetaInfoFileName)
+    fun isVersionChanged(chunk: KotlinChunk, buildMetaInfo: BuildMetaInfo): Boolean {
+        val file = chunk.buildMetaInfoFile(jpsModuleBuildTarget)
+        if (!file.exists()) return false
 
-    fun saveVersions(context: CompileContext, chunk: ModuleChunk, commonArguments: CommonCompilerArguments) {
-        val dataManager = context.projectDescriptor.dataManager
-        val targets = chunk.targets
-        val cacheVersionsProvider = CacheVersionProvider(dataManager.dataPaths, this)
-        cacheVersionsProvider.allNormalVersions(targets).forEach { it.saveIfNeeded() }
+        val prevBuildMetaInfo =
+            try {
+                buildMetaInfoFactory.deserializeFromString(file.readText()) ?: return false
+            } catch (e: Exception) {
+                KotlinBuilder.LOG.error("Could not deserialize build meta info", e)
+                return false
+            }
 
-        val buildMetaInfo = buildMetaInfoFactory.create(commonArguments)
-        val serializedMetaInfo = buildMetaInfoFactory.serializeToString(buildMetaInfo)
+        val prevLangVersion = LanguageVersion.fromVersionString(prevBuildMetaInfo.languageVersionString)
+        val prevApiVersion = ApiVersion.parse(prevBuildMetaInfo.apiVersionString)
 
-        for (target in chunk.targets) {
-            buildMetaInfoFile(target, dataManager).writeText(serializedMetaInfo)
+        val reasonToRebuild = when {
+            chunk.langVersion != prevLangVersion -> "Language version was changed ($prevLangVersion -> ${chunk.langVersion})"
+            chunk.apiVersion != prevApiVersion -> "Api version was changed ($prevApiVersion -> ${chunk.apiVersion})"
+            prevLangVersion != LanguageVersion.KOTLIN_1_0 && prevBuildMetaInfo.isEAP && !buildMetaInfo.isEAP -> {
+                // If EAP->Non-EAP build with IC, then rebuild all kotlin
+                "Last build was compiled with EAP-plugin"
+            }
+            else -> null
         }
+
+        if (reasonToRebuild != null) {
+            KotlinBuilder.LOG.info("$reasonToRebuild. Performing non-incremental rebuild (kotlin only)")
+            return true
+        }
+
+        return false
     }
 
-    fun checkCachesVersions(chunk: ModuleChunk, dataManager: BuildDataManager, actions: MutableSet<CacheVersion.Action>) {
-        val args = compilerArgumentsForChunk(chunk)
-        val currentBuildMetaInfo = buildMetaInfoFactory.create(args)
+    private fun checkRepresentativeTarget(chunk: KotlinChunk) {
+        check(chunk.representativeTarget == this)
+    }
 
-        for (target in chunk.targets) {
-            val file = buildMetaInfoFile(target, dataManager)
-            if (!file.exists()) continue
+    private fun checkRepresentativeTarget(chunk: ModuleChunk) {
+        check(chunk.representativeTarget() == jpsModuleBuildTarget)
+    }
 
-            val lastBuildMetaInfo =
-                try {
-                    buildMetaInfoFactory.deserializeFromString(file.readText()) ?: continue
-                } catch (e: Exception) {
-                    KotlinBuilder.LOG.error("Could not deserialize build meta info", e)
-                    continue
-                }
-
-            val lastBuildLangVersion = LanguageVersion.fromVersionString(lastBuildMetaInfo.languageVersionString)
-            val lastBuildApiVersion = ApiVersion.parse(lastBuildMetaInfo.apiVersionString)
-            val currentLangVersion =
-                args.languageVersion?.let { LanguageVersion.fromVersionString(it) } ?: LanguageVersion.LATEST_STABLE
-            val currentApiVersion =
-                args.apiVersion?.let { ApiVersion.parse(it) } ?: ApiVersion.createByLanguageVersion(currentLangVersion)
-
-            val reasonToRebuild = when {
-                currentLangVersion != lastBuildLangVersion -> {
-                    "Language version was changed ($lastBuildLangVersion -> $currentLangVersion)"
-                }
-
-                currentApiVersion != lastBuildApiVersion -> {
-                    "Api version was changed ($lastBuildApiVersion -> $currentApiVersion)"
-                }
-
-                lastBuildLangVersion != LanguageVersion.KOTLIN_1_0 && lastBuildMetaInfo.isEAP && !currentBuildMetaInfo.isEAP -> {
-                    // If EAP->Non-EAP build with IC, then rebuild all kotlin
-                    "Last build was compiled with EAP-plugin"
-                }
-                else -> null
-            }
-
-            if (reasonToRebuild != null) {
-                KotlinBuilder.LOG.info("$reasonToRebuild. Performing non-incremental rebuild (kotlin only)")
-                actions.add(CacheVersion.Action.REBUILD_ALL_KOTLIN)
-            }
-        }
+    private fun checkRepresentativeTarget(chunk: List<KotlinModuleBuildTarget<*>>) {
+        check(chunk.first() == this)
     }
 }

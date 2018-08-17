@@ -18,6 +18,7 @@ import org.jetbrains.kotlin.cli.common.arguments.K2MetadataCompilerArguments
 import org.jetbrains.kotlin.compilerRunner.JpsCompilerEnvironment
 import org.jetbrains.kotlin.compilerRunner.JpsKotlinCompilerRunner
 import org.jetbrains.kotlin.jps.build.KotlinDirtySourceFilesHolder
+import org.jetbrains.kotlin.jps.build.ModuleBuildTarget
 import org.jetbrains.kotlin.jps.model.k2MetadataCompilerArguments
 import org.jetbrains.kotlin.jps.model.kotlinCompilerSettings
 
@@ -89,7 +90,7 @@ class KotlinCommonModuleBuildTarget(context: CompileContext, jpsModuleBuildTarge
         result: MutableList<String>,
         isTests: Boolean
     ) {
-        val dependencyBuildTarget = context.kotlinBuildTargets[ModuleBuildTarget(module, isTests)]
+        val dependencyBuildTarget = kotlinContext.targetsBinding[ModuleBuildTarget(module, isTests)]
 
         if (dependencyBuildTarget != this@KotlinCommonModuleBuildTarget &&
             dependencyBuildTarget is KotlinCommonModuleBuildTarget &&

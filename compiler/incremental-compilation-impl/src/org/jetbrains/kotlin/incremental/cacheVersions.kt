@@ -21,16 +21,15 @@ import java.io.File
 internal const val STANDALONE_CACHE_VERSION = 2
 internal const val STANDALONE_VERSION_FILE_NAME = "standalone-ic-format-version.txt"
 
-fun standaloneCacheVersion(dataRoot: File, enabled: Boolean): CacheVersion =
+fun standaloneCacheVersion(dataRoot: File, enabled: Boolean): CacheAttributesDiff =
         customCacheVersion(STANDALONE_CACHE_VERSION, STANDALONE_VERSION_FILE_NAME, dataRoot, enabled)
 
-fun customCacheVersion(version: Int, fileName: String, dataRoot: File, enabled: Boolean): CacheVersion =
-        CacheVersion(ownVersion = version,
+fun customCacheVersion(version: Int, fileName: String, dataRoot: File, enabled: Boolean): CacheAttributesDiff =
+        CacheAttributesDiffImpl(
+                expectedOwnVersion = version,
                 versionFile = File(dataRoot, fileName),
-                whenVersionChanged = CacheVersion.Action.REBUILD_ALL_KOTLIN,
-                whenTurnedOn = CacheVersion.Action.REBUILD_ALL_KOTLIN,
-                whenTurnedOff = CacheVersion.Action.REBUILD_ALL_KOTLIN,
-                isEnabled = enabled)
+                isEnabled = enabled
+        )
 
-fun commonCacheVersions(cachesDir: File, enabled: Boolean): List<CacheVersion> =
-    listOf(normalCacheVersion(cachesDir, enabled), dataContainerCacheVersion(cachesDir, enabled))
+fun commonCacheVersions(cachesDir: File, enabled: Boolean): List<CacheAttributesDiff> =
+    listOf(readLocalCacheStatus(cachesDir, enabled), readLookupsCacheStatus(cachesDir, enabled))

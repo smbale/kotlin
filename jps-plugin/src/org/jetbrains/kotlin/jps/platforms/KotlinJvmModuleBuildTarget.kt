@@ -74,7 +74,7 @@ class KotlinJvmModuleBuildTarget(compileContext: CompileContext, jpsModuleBuildT
             register(
                 IncrementalCompilationComponents::class.java,
                 IncrementalCompilationComponentsImpl(
-                    incrementalCaches.mapKeys { context.kotlinBuildTargets[it.key]!!.targetId } as Map<TargetId, IncrementalCache>
+                    incrementalCaches.mapKeys { kotlinContext.targetsBinding[it.key]!!.targetId } as Map<TargetId, IncrementalCache>
                 )
             )
         }
@@ -141,7 +141,7 @@ class KotlinJvmModuleBuildTarget(compileContext: CompileContext, jpsModuleBuildT
 
         var hasDirtySources = false
 
-        val targets = chunk.targets.mapNotNull { this.context.kotlinBuildTargets[it] as? KotlinJvmModuleBuildTarget }
+        val targets = chunk.targets.mapNotNull { kotlinContext.targetsBinding[it] as? KotlinJvmModuleBuildTarget }
 
         val outputDirs = targets.map { it.outputDir }.toSet()
 

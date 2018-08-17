@@ -58,7 +58,8 @@ import org.jetbrains.kotlin.codegen.AsmUtil
 import org.jetbrains.kotlin.codegen.JvmCodegenUtil
 import org.jetbrains.kotlin.config.IncrementalCompilation
 import org.jetbrains.kotlin.config.KotlinCompilerVersion.TEST_IS_PRE_RELEASE_SYSTEM_PROPERTY
-import org.jetbrains.kotlin.incremental.CacheVersion
+import org.jetbrains.kotlin.incremental.ICacheAttributesDiff
+import org.jetbrains.kotlin.incremental.CacheAttributesDiff
 import org.jetbrains.kotlin.incremental.components.LookupTracker
 import org.jetbrains.kotlin.incremental.withIC
 import org.jetbrains.kotlin.jps.build.KotlinJpsBuildTest.LibraryDependency.*
@@ -983,15 +984,16 @@ open class KotlinJpsBuildTest : AbstractKotlinJpsBuildTestCase() {
 
         val actual = StringBuilder()
         buildCustom(CanceledStatus.NULL, TestProjectBuilderLogger(), BuildResult()) {
-            project.setTestingContext(TestingContext(LookupTracker.DO_NOTHING, object : BuildLogger {
+            project.setTestingContext(TestingContext(LookupTracker.DO_NOTHING, object : TestingBuildLogger {
                 override fun buildStarted(context: CompileContext, chunk: ModuleChunk) {
                     actual.append("Targets dependent on ${chunk.targets.joinToString() }:\n")
                     actual.append(getDependentTargets(chunk.targets, context).map { it.toString() }.sorted().joinToString("\n"))
                     actual.append("\n---------\n")
                 }
 
+                override fun invalidOrUnusedCache(attributesDiff: ICacheAttributesDiff) {}
                 override fun afterBuildStarted(context: CompileContext, chunk: ModuleChunk) {}
-                override fun actionsOnCacheVersionChanged(actions: List<CacheVersion.Action>) {}
+                override fun actionsOnCacheVersionChanged(actions: List<CacheAttributesDiff.Action>) {}
                 override fun buildFinished(exitCode: ModuleLevelBuilder.ExitCode) {}
                 override fun markedAsDirtyBeforeRound(files: Iterable<File>) {}
                 override fun markedAsDirtyAfterRound(files: Iterable<File>) {}

@@ -100,7 +100,7 @@ abstract class AbstractIncrementalLazyCachesTest : AbstractIncrementalJpsTest() 
             val kotlinModuleBuildTarget = dummyCompileContext.kotlinBuildTargets[target]!!
             val metaBuildInfo = kotlinModuleBuildTarget.buildMetaInfoFile(target, dataManager)
             dumpCachesForTarget(p, paths, target,
-                                versions.normalVersion(target).formatVersionFile,
+                                versions.readLocalCacheStatus(target).formatVersionFile,
                                 metaBuildInfo,
                                 subdirectory = KOTLIN_CACHE_DIRECTORY_NAME)
         }

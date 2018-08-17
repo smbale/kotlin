@@ -99,20 +99,20 @@ inline fun <R> withIC(enabled: Boolean = true, fn: ()->R): R {
 }
 
 class IncrementalJvmCompilerRunner(
-        workingDir: File,
-        private val javaSourceRoots: Set<JvmSourceRoot>,
-        cacheVersions: List<CacheVersion>,
-        reporter: ICReporter,
-        private val usePreciseJavaTracking: Boolean,
-        buildHistoryFile: File,
-        localStateDirs: Collection<File>,
-        private val modulesApiHistory: ModulesApiHistory
+    workingDir: File,
+    private val javaSourceRoots: Set<JvmSourceRoot>,
+    cachesAttributeDiffs: List<CacheAttributesDiff>,
+    reporter: ICReporter,
+    private val usePreciseJavaTracking: Boolean,
+     buildHistoryFile: File,
+    localStateDirs: Collection<File>,
+    private val modulesApiHistory: ModulesApiHistory
 ) : IncrementalCompilerRunner<K2JVMCompilerArguments, IncrementalJvmCachesManager>(
-        workingDir,
-        "caches-jvm",
-        cacheVersions,
-        reporter,
-        localStateDirs = localStateDirs,
+    workingDir,
+    "caches-jvm",
+    cachesAttributeDiffs,
+    reporter,
+    localStateDirs = localStateDirs,
         buildHistoryFile = buildHistoryFile
 ) {
     override fun isICEnabled(): Boolean =

@@ -44,7 +44,7 @@ import org.jetbrains.jps.model.java.JpsJavaDependencyScope
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.util.JpsPathUtil
 import org.jetbrains.kotlin.config.IncrementalCompilation
-import org.jetbrains.kotlin.incremental.CacheVersion
+import org.jetbrains.kotlin.incremental.CacheAttributesDiff
 import org.jetbrains.kotlin.incremental.LookupSymbol
 import org.jetbrains.kotlin.incremental.isJavaFile
 import org.jetbrains.kotlin.incremental.testingUtils.*
@@ -81,6 +81,9 @@ abstract class AbstractIncrementalJpsTest(
     private var isICEnabledBackup: Boolean = false
 
     protected var mapWorkingToOriginalFile: MutableMap<File, File> = hashMapOf()
+
+    // for getting kotlin platform only
+    lateinit var dummyCompileContext: CompileContext
 
     protected open val buildLogFinder: BuildLogFinder
         get() = BuildLogFinder()
@@ -152,12 +155,11 @@ abstract class AbstractIncrementalJpsTest(
             val buildResult = BuildResult()
             builder.addMessageHandler(buildResult)
             val finalScope = scope.build()
+            dummyCompileContext = CompileContextImpl.createContextForTests(finalScope, projectDescriptor)
+
             builder.build(finalScope, false)
 
             lookupTracker.lookups.mapTo(lookupsDuringTest) { LookupSymbol(it.name, it.scopeFqName) }
-
-            // for getting kotlin platform only
-            val dummyCompileContext = CompileContextImpl.createContextForTests(finalScope, projectDescriptor)
 
             if (!buildResult.isSuccessful) {
                 val errorMessages =
@@ -443,12 +445,12 @@ abstract class AbstractIncrementalJpsTest(
 
     override fun doGetProjectDir(): File? = workDir
 
-    private class MyLogger(val rootPath: String) : ProjectBuilderLoggerBase(), BuildLogger {
+    private class MyLogger(val rootPath: String) : ProjectBuilderLoggerBase(), TestingBuildLogger {
         private val markedDirtyBeforeRound = ArrayList<File>()
         private val markedDirtyAfterRound = ArrayList<File>()
 
-        override fun actionsOnCacheVersionChanged(actions: List<CacheVersion.Action>) {
-            if (actions.size > 1 && actions.any { it != CacheVersion.Action.DO_NOTHING }) {
+        override fun actionsOnCacheVersionChanged(actions: List<CacheAttributesDiff.Action>) {
+            if (actions.size > 1 && actions.any { it != CacheAttributesDiff.Action.DO_NOTHING }) {
                 logLine("Actions after cache changed: $actions")
             }
         }

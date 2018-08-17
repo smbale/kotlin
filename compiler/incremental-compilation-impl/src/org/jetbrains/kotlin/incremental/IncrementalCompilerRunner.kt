@@ -37,11 +37,11 @@ abstract class IncrementalCompilerRunner<
     Args : CommonCompilerArguments,
     CacheManager : IncrementalCachesManager<*>
 >(
-        workingDir: File,
-        cacheDirName: String,
-        protected val cacheVersions: List<CacheVersion>,
-        protected val reporter: ICReporter,
-        private val buildHistoryFile: File,
+    workingDir: File,
+    cacheDirName: String,
+    protected val cachesAttributeDiffs: List<CacheAttributesDiff>,
+    protected val reporter: ICReporter,
+    private val buildHistoryFile: File,
         private val localStateDirs: Collection<File> = emptyList()
 ) {
 
@@ -268,7 +268,7 @@ abstract class IncrementalCompilerRunner<
         processChangesAfterBuild(compilationMode, currentBuildInfo, dirtyData)
 
         if (exitCode == ExitCode.OK) {
-            cacheVersions.forEach { it.saveIfNeeded() }
+            cachesAttributeDiffs.forEach { it.saveExpectedAttributesIfNeeded() }
         }
 
         return exitCode

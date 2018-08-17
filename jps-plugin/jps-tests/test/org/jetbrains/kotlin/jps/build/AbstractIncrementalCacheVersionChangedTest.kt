@@ -41,5 +41,5 @@ abstract class AbstractIncrementalCacheVersionChangedTest : AbstractIncrementalJ
     }
 
     protected open fun getVersions(cacheVersionProvider: CacheVersionProvider, targets: Iterable<ModuleBuildTarget>) =
-            targets.map { cacheVersionProvider.normalVersion(it) }
+            targets.map { cacheVersionProvider.readLocalCacheStatus(it) }
 }

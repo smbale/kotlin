@@ -19,29 +19,20 @@ package org.jetbrains.kotlin.jps.incremental
 import org.jetbrains.jps.builders.BuildTarget
 import org.jetbrains.jps.builders.storage.BuildDataPaths
 import org.jetbrains.jps.incremental.ModuleBuildTarget
-import org.jetbrains.kotlin.incremental.CacheVersion
-import org.jetbrains.kotlin.incremental.dataContainerCacheVersion
-import org.jetbrains.kotlin.incremental.normalCacheVersion
-import org.jetbrains.kotlin.jps.platforms.KotlinModuleBuildTarget
+import org.jetbrains.kotlin.incremental.CacheAttributesDiff
+import org.jetbrains.kotlin.incremental.readLocalCacheStatus
 import java.io.File
 
 
 class CacheVersionProvider(
     private val paths: BuildDataPaths,
-    private val representativeTarget: KotlinModuleBuildTarget<*>
+    private val isIncrementalCompilationEnabled: Boolean
 ) {
     private val BuildTarget<*>.dataRoot: File
         get() = paths.getTargetDataRoot(this)
 
-    fun normalVersion(target: ModuleBuildTarget): CacheVersion =
-        normalCacheVersion(target.dataRoot, representativeTarget.isIncrementalCompilationEnabled)
+    fun readLocalCacheStatus(target: ModuleBuildTarget): CacheAttributesDiff =
+        readLocalCacheStatus(target.dataRoot, isIncrementalCompilationEnabled)
 
-    fun dataContainerVersion(): CacheVersion {
-        return dataContainerCacheVersion(
-            KotlinDataContainerTarget.dataRoot,
-            representativeTarget.isIncrementalCompilationEnabled
-        )
-    }
-
-    fun allNormalVersions(targets: Iterable<ModuleBuildTarget>): Iterable<CacheVersion> = targets.map { normalVersion(it) }
+    fun allNormalVersions(targets: Iterable<ModuleBuildTarget>): Iterable<CacheAttributesDiff> = targets.map { readLocalCacheStatus(it) }
 }

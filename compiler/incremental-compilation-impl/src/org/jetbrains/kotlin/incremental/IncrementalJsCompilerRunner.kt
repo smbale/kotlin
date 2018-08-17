@@ -64,16 +64,16 @@ inline fun <R> withJsIC(fn: () -> R): R {
 }
 
 class IncrementalJsCompilerRunner(
-        workingDir: File,
-        cacheVersions: List<CacheVersion>,
-        reporter: ICReporter,
+    workingDir: File,
+    cachesAttributeDiffs: List<CacheAttributesDiff>,
+    reporter: ICReporter,
         buildHistoryFile: File,
         private val modulesApiHistory: ModulesApiHistory
 ) : IncrementalCompilerRunner<K2JSCompilerArguments, IncrementalJsCachesManager>(
-        workingDir,
-        "caches-js",
-        cacheVersions,
-        reporter,
+    workingDir,
+    "caches-js",
+    cachesAttributeDiffs,
+    reporter,
         buildHistoryFile = buildHistoryFile
 ) {
     override fun isICEnabled(): Boolean =
