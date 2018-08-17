@@ -37,7 +37,7 @@ val ScriptDefinitionKeys.baseClass by PropertiesCollection.key<KotlinType>() // 
 
 val ScriptDefinitionKeys.scriptBodyTarget by PropertiesCollection.key<ScriptBodyTarget>(ScriptBodyTarget.Constructor)
 
-val ScriptDefinitionKeys.scriptImplicitReceivers by PropertiesCollection.key<List<KotlinType>>() // in the order from outer to inner scope
+val ScriptDefinitionKeys.implicitReceivers by PropertiesCollection.key<List<KotlinType>>() // in the order from outer to inner scope
 
 val ScriptDefinitionKeys.providedProperties by PropertiesCollection.key<Map<String, KotlinType>>() // external variables
 

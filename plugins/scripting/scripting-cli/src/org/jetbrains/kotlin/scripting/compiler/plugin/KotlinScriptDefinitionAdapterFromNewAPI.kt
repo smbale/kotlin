@@ -62,7 +62,7 @@ abstract class KotlinScriptDefinitionAdapterFromNewAPIBase : KotlinScriptDefinit
     }
 
     override val implicitReceivers: List<KType> by lazy(LazyThreadSafetyMode.PUBLICATION) {
-        scriptDefinition[ScriptDefinition.scriptImplicitReceivers]
+        scriptDefinition[ScriptDefinition.implicitReceivers]
             .orEmpty()
             .map { getScriptingClass(it).starProjectedType }
     }

@@ -30,7 +30,7 @@ val ScriptCompileConfigurationKeys.sourceFragments by PropertiesCollection.key<L
 
 val ScriptCompileConfigurationKeys.scriptBodyTarget by PropertiesCollection.keyCopy(ScriptDefinition.scriptBodyTarget)
 
-val ScriptCompileConfigurationKeys.scriptImplicitReceivers by PropertiesCollection.keyCopy(ScriptDefinition.scriptImplicitReceivers)
+val ScriptCompileConfigurationKeys.scriptImplicitReceivers by PropertiesCollection.keyCopy(ScriptDefinition.implicitReceivers)
 
 val ScriptCompileConfigurationKeys.providedProperties by PropertiesCollection.keyCopy(ScriptDefinition.providedProperties)
 
