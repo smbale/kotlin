@@ -82,7 +82,12 @@ val packCompiler by task<ShadowJar> {
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
     destinationDir = File(buildDir, "libs")
 
-    setupPublicJar("before-proguard")
+    if (shrink) {
+        setupPublicJar("before-proguard")
+    }
+    else {
+        setupPublicJar()
+    }
     from(fatJarContents)
     afterEvaluate {
         fatJarContentsStripServices.files.forEach { from(zipTree(it)) { exclude("META-INF/services/**") } }
@@ -97,7 +102,7 @@ val proguard by task<ProGuardTask> {
     dependsOn(packCompiler)
     configuration("$rootDir/compiler/compiler.pro")
 
-    val outputJar = fileFrom(buildDir, "libs", "$compilerBaseName-after-proguard.jar")
+    val outputJar = fileFrom(buildDir, "libs", "$compilerBaseName-$version.jar")
 
     inputs.files(packCompiler.outputs.files.singleFile)
     outputs.file(outputJar)
