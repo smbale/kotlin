@@ -8,15 +8,15 @@ package kotlin.contracts
 import kotlin.internal.ContractsDsl
 
 @ContractsDsl
-@SinceKotlin("1.2")
+@SinceKotlin("1.3")
 interface Effect
 
 @ContractsDsl
-@SinceKotlin("1.2")
+@SinceKotlin("1.3")
 interface ConditionalEffect : Effect
 
 @ContractsDsl
-@SinceKotlin("1.2")
+@SinceKotlin("1.3")
 interface SimpleEffect {
     @ContractsDsl
     infix fun implies(booleanExpression: Boolean): ConditionalEffect
@@ -24,13 +24,13 @@ interface SimpleEffect {
 
 
 @ContractsDsl
-@SinceKotlin("1.2")
+@SinceKotlin("1.3")
 interface Returns : SimpleEffect
 
 @ContractsDsl
-@SinceKotlin("1.2")
+@SinceKotlin("1.3")
 interface ReturnsNotNull : SimpleEffect
 
 @ContractsDsl
-@SinceKotlin("1.2")
+@SinceKotlin("1.3")
 interface CallsInPlace : SimpleEffect
