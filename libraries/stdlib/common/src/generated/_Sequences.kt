@@ -644,7 +644,7 @@ public inline fun <T, K, V, M : MutableMap<in K, in V>> Sequence<T>.associateTo(
 
 /**
  * Returns a [Map] where keys are elements from the given sequence and values are
- * produced by the [keySelector] function applied to each element.
+ * produced by the [valueSelector] function applied to each element.
  * 
  * If any two elements are equal, the last one gets added to the map.
  * 

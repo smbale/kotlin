@@ -417,7 +417,7 @@ object Snapshots : TemplateGroupBase() {
         doc {
             """
             Returns a [Map] where keys are ${f.element.pluralize()} from the given ${f.collection} and values are
-            produced by the [keySelector] function applied to each ${f.element}.
+            produced by the [valueSelector] function applied to each ${f.element}.
 
             If any two ${f.element.pluralize()} are equal, the last one gets added to the map.
 

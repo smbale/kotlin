@@ -617,7 +617,7 @@ public inline fun <K, V, M : MutableMap<in K, in V>> CharSequence.associateTo(de
 
 /**
  * Returns a [Map] where keys are characters from the given char sequence and values are
- * produced by the [keySelector] function applied to each character.
+ * produced by the [valueSelector] function applied to each character.
  * 
  * If any two characters are equal, the last one gets added to the map.
  * 
