@@ -99,8 +99,10 @@ public class JsInliner extends JsVisitorWithContextImpl {
             inliner.additionalNameBindings.clear();
             inliner.existingNameBindings = CollectUtilsKt.collectNameBindings(Collections.singletonList(fragment));
 
-            inliner.inliningContexts.push(inliner.new JsInliningContext(inliner.new ListContext<JsStatement>()));
-            inliner.acceptStatement(fragment.getDeclarationBlock());
+            ListContext<JsStatement> topLevelContextForInline = inliner.new ListContext<JsStatement>();
+            inliner.statementContextForInline = topLevelContextForInline;
+            inliner.inliningContexts.push(inliner.new JsInliningContext(topLevelContextForInline));
+            topLevelContextForInline.traverse(fragment.getDeclarationBlock().getStatements());
 
             // There can be inlined function in top-level initializers, we need to optimize them as well
             JsFunction fakeInitFunction = new JsFunction(JsDynamicScope.INSTANCE, fragment.getInitializerBlock(), "");
@@ -182,10 +184,7 @@ public class JsInliner extends JsVisitorWithContextImpl {
     }
 
     private void startFunction(@NotNull JsFunction function) {
-        JsContext<JsStatement> statementContext = statementContextForInline != null ? statementContextForInline :
-                                                  getLastStatementLevelContext();
-
-        inliningContexts.push(new JsInliningContext(statementContext));
+        inliningContexts.push(new JsInliningContext(statementContextForInline));
 
         assert !inProcessFunctions.contains(function): "Inliner has revisited function";
         inProcessFunctions.add(function);
@@ -247,9 +246,6 @@ public class JsInliner extends JsVisitorWithContextImpl {
 
             innerContext.traverse(statements);
             statementContexts.pop();
-        }
-        else {
-            statementContextForInline = getLastStatementLevelContext();
         }
 
         startFunction(functionWithWrapper.getFunction());
