@@ -105,7 +105,7 @@ class KotlinBuilder : ModuleLevelBuilder(BuilderCategory.SOURCE_PROCESSOR) {
             LOG.info("Label in local history: $historyLabel")
         }
 
-        val kotlinContext = KotlinCompilation(context)
+        val kotlinContext = KotlinGlobalCompileContext(context)
         context.putUserData(kotlinCompileContextKey, kotlinContext)
 
         kotlinContext.loadTargets()

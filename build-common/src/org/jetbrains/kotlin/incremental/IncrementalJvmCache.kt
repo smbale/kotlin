@@ -23,7 +23,10 @@ import com.intellij.util.io.EnumeratorStringDescriptor
 import gnu.trove.THashSet
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.build.GeneratedJvmClass
+import org.jetbrains.kotlin.config.IncrementalCompilation
 import org.jetbrains.kotlin.incremental.storage.*
+import org.jetbrains.kotlin.incremental.storage.version.clean
+import org.jetbrains.kotlin.incremental.storage.version.localCacheVersionManager
 import org.jetbrains.kotlin.inline.inlineFunctionsJvmNames
 import org.jetbrains.kotlin.load.kotlin.header.KotlinClassHeader
 import org.jetbrains.kotlin.load.kotlin.incremental.components.IncrementalCache
@@ -263,7 +266,7 @@ open class IncrementalJvmCache(
 
     override fun clean() {
         super.clean()
-        localCacheVersionManager(targetDataRoot).clean()
+        localCacheVersionManager(targetDataRoot, IncrementalCompilation.isEnabledForJvm()).clean()
     }
 
     private inner class ProtoMap(storageFile: File) : BasicStringMap<ProtoMapValue>(storageFile, ProtoMapValueExternalizer) {

@@ -23,13 +23,14 @@ import org.jetbrains.kotlin.compilerRunner.JpsCompilerEnvironment
 import org.jetbrains.kotlin.config.ApiVersion
 import org.jetbrains.kotlin.config.LanguageVersion
 import org.jetbrains.kotlin.config.Services
-import org.jetbrains.kotlin.incremental.CacheAttributesDiff
 import org.jetbrains.kotlin.incremental.ChangesCollector
 import org.jetbrains.kotlin.incremental.ExpectActualTrackerImpl
 import org.jetbrains.kotlin.incremental.components.ExpectActualTracker
 import org.jetbrains.kotlin.incremental.components.LookupTracker
+import org.jetbrains.kotlin.incremental.storage.version.CacheAttributesDiff
+import org.jetbrains.kotlin.incremental.storage.version.loadDiff
+import org.jetbrains.kotlin.incremental.storage.version.localCacheVersionManager
 import org.jetbrains.kotlin.jps.build.*
-import org.jetbrains.kotlin.jps.incremental.CacheVersionProvider
 import org.jetbrains.kotlin.jps.incremental.JpsIncrementalCache
 import org.jetbrains.kotlin.jps.model.productionOutputFilePath
 import org.jetbrains.kotlin.jps.model.testOutputFilePath
@@ -47,19 +48,20 @@ abstract class KotlinModuleBuildTarget<BuildMetaInfoType : BuildMetaInfo>(
     val jpsModuleBuildTarget: ModuleBuildTarget
 ) {
     // TODO(1.2.80): got rid of context and replace it with kotlinContext
-    val kotlinContext: KotlinCompilation
+    val kotlinContext: KotlinGlobalCompileContext
         get() = context.kotlinCompilation
 
     abstract val globalLookupCacheId: String
 
-    val initialLocalCacheAttributesDiff: CacheAttributesDiff
-
     abstract val isIncrementalCompilationEnabled: Boolean
 
-    init {
-        initialLocalCacheAttributesDiff = CacheVersionProvider(kotlinContext.dataPaths, isIncrementalCompilationEnabled)
-            .readLocalCacheStatus(jpsModuleBuildTarget)
-    }
+    @Suppress("LeakingThis")
+    val localCacheVersionManager = localCacheVersionManager(
+        kotlinContext.dataPaths.getTargetDataRoot(jpsModuleBuildTarget),
+        isIncrementalCompilationEnabled
+    )
+
+    val initialLocalCacheAttributesDiff: CacheAttributesDiff<*> = localCacheVersionManager.loadDiff()
 
     val module: JpsModule
         get() = jpsModuleBuildTarget.module
@@ -85,8 +87,8 @@ abstract class KotlinModuleBuildTarget<BuildMetaInfoType : BuildMetaInfo>(
         val explicitOutputPath = if (isTests) module.testOutputFilePath else module.productionOutputFilePath
         val explicitOutputDir = explicitOutputPath?.let { File(it).absoluteFile.parentFile }
         return@lazy explicitOutputDir
-                ?: jpsModuleBuildTarget.outputDir
-                ?: throw ProjectBuildException("No output directory found for " + this)
+            ?: jpsModuleBuildTarget.outputDir
+            ?: throw ProjectBuildException("No output directory found for " + this)
     }
 
     val friendBuildTargets: List<KotlinModuleBuildTarget<*>>

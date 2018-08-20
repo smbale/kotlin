@@ -39,6 +39,7 @@ import org.jetbrains.kotlin.incremental.components.ExpectActualTracker
 import org.jetbrains.kotlin.incremental.components.LookupTracker
 import org.jetbrains.kotlin.incremental.multiproject.EmptyModulesApiHistory
 import org.jetbrains.kotlin.incremental.multiproject.ModulesApiHistory
+import org.jetbrains.kotlin.incremental.storage.version.CacheVersionManager
 import org.jetbrains.kotlin.incremental.util.Either
 import org.jetbrains.kotlin.load.java.JavaClassesTracker
 import org.jetbrains.kotlin.load.kotlin.header.KotlinClassHeader
@@ -57,7 +58,7 @@ fun makeIncrementally(
         reporter: ICReporter = EmptyICReporter
 ) {
     val isIncremental = IncrementalCompilation.isEnabledForJvm()
-    val versions = commonCacheVersions(cachesDir, isIncremental) + standaloneCacheVersion(cachesDir, isIncremental)
+    val versions = commonCacheVersionsManagers(cachesDir, isIncremental) + standaloneCacheVersionManager(cachesDir, isIncremental)
 
     val kotlinExtensions = listOf("kt", "kts")
     val allExtensions = kotlinExtensions + listOf("java")
@@ -101,7 +102,7 @@ inline fun <R> withIC(enabled: Boolean = true, fn: ()->R): R {
 class IncrementalJvmCompilerRunner(
     workingDir: File,
     private val javaSourceRoots: Set<JvmSourceRoot>,
-    cachesAttributeDiffs: List<CacheAttributesDiff>,
+    cachesVersionManagers: List<CacheVersionManager>,
     reporter: ICReporter,
     private val usePreciseJavaTracking: Boolean,
      buildHistoryFile: File,
@@ -110,7 +111,7 @@ class IncrementalJvmCompilerRunner(
 ) : IncrementalCompilerRunner<K2JVMCompilerArguments, IncrementalJvmCachesManager>(
     workingDir,
     "caches-jvm",
-    cachesAttributeDiffs,
+    cachesVersionManagers,
     reporter,
     localStateDirs = localStateDirs,
         buildHistoryFile = buildHistoryFile

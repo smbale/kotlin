@@ -130,7 +130,7 @@ fun Project.runIdeTask(name: String, ideaPluginDir: File, ideaSandboxDir: File, 
         workingDir = File(intellijRootDir(), "bin")
 
         jvmArgs(
-            "-Xmx3G",
+            "-Xmx1250m",
             "-XX:ReservedCodeCacheSize=240m",
             "-XX:+HeapDumpOnOutOfMemoryError",
             "-ea",

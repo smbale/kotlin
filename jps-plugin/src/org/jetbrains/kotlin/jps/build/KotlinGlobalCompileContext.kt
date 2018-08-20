@@ -11,19 +11,25 @@ import org.jetbrains.jps.incremental.CompileContext
 import org.jetbrains.jps.incremental.FSOperations
 import org.jetbrains.jps.incremental.ModuleBuildTarget
 import org.jetbrains.jps.incremental.fs.CompilationRound
-import org.jetbrains.kotlin.incremental.CacheStatus
-import org.jetbrains.kotlin.jps.incremental.CompositeLookupsCacheAttributesDiff
+import org.jetbrains.kotlin.incremental.storage.version.CacheAttributesDiff
+import org.jetbrains.kotlin.incremental.storage.version.CacheStatus
+import org.jetbrains.kotlin.incremental.storage.version.loadDiff
+import org.jetbrains.kotlin.jps.incremental.CompositeLookupsCacheAttributesManager
 import org.jetbrains.kotlin.jps.incremental.KotlinDataContainerTarget
 import org.jetbrains.kotlin.jps.incremental.cleanLookupStorage
 import org.jetbrains.kotlin.jps.incremental.getKotlinCache
 
-internal val kotlinCompileContextKey = Key<KotlinCompilation>("kotlin")
+internal val kotlinCompileContextKey = Key<KotlinGlobalCompileContext>("kotlin")
 
-val CompileContext.kotlinCompilation: KotlinCompilation
+val CompileContext.kotlinCompilation: KotlinGlobalCompileContext
     get() = getUserData(kotlinCompileContextKey)
         ?: error("KotlinCompilation available only at build phase (between KotlinBuilder.buildStarted and KotlinBuilder.buildFinished)")
 
-class KotlinCompilation(val context: CompileContext) {
+class KotlinGlobalCompileContext(val context: CompileContext) {
+    init {
+        context.testingContext?.kotlinGlobalCompileContext = this
+    }
+
     // TODO(1.2.80): As all targets now loaded at build start, no ConcurrentHasMap in KotlinBuildTargets needed anymore
     val targetsBinding = KotlinBuildTargets(context)
 
@@ -34,7 +40,8 @@ class KotlinCompilation(val context: CompileContext) {
 
     lateinit var chunks: List<KotlinChunk>
     private lateinit var chunksBindingByRepresentativeTarget: Map<ModuleBuildTarget, KotlinChunk>
-    lateinit var initialLookupsCacheStateDiff: CompositeLookupsCacheAttributesDiff
+    lateinit var lookupsCacheAttributesManager: CompositeLookupsCacheAttributesManager
+    lateinit var initialLookupsCacheStateDiff: CacheAttributesDiff<*>
 
     val shouldCheckCacheVersions = System.getProperty(KotlinBuilder.SKIP_CACHE_VERSION_CHECK_PROPERTY) == null
 
@@ -61,7 +68,8 @@ class KotlinCompilation(val context: CompileContext) {
 
         this.chunks = chunks.toList()
         this.chunksBindingByRepresentativeTarget = chunks.associateBy { it.representativeTarget.jpsModuleBuildTarget }
-        this.initialLookupsCacheStateDiff = CompositeLookupsCacheAttributesDiff(globalCacheRootPath, expectedLookupsCacheComponents)
+        this.lookupsCacheAttributesManager = CompositeLookupsCacheAttributesManager(globalCacheRootPath, expectedLookupsCacheComponents)
+        this.initialLookupsCacheStateDiff = lookupsCacheAttributesManager.loadDiff()
     }
 
     fun checkCacheVersions() {
@@ -148,7 +156,7 @@ class KotlinCompilation(val context: CompileContext) {
     private fun clearLookupCache() {
         KotlinBuilder.LOG.info("Clearing lookup cache")
         dataManager.cleanLookupStorage(KotlinBuilder.LOG)
-        initialLookupsCacheStateDiff.clean()
+        initialLookupsCacheStateDiff.saveExpectedIfNeeded()
     }
 
     fun cleanupCaches() {
@@ -166,7 +174,7 @@ class KotlinCompilation(val context: CompileContext) {
     }
 
     fun dispose() {
-        initialLookupsCacheStateDiff.saveExpectedAttributesIfNeeded()
+        initialLookupsCacheStateDiff.saveExpectedIfNeeded()
     }
 
     fun getChunk(rawChunk: ModuleChunk): KotlinChunk? {

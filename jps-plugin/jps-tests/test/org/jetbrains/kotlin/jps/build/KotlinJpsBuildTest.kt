@@ -58,14 +58,12 @@ import org.jetbrains.kotlin.codegen.AsmUtil
 import org.jetbrains.kotlin.codegen.JvmCodegenUtil
 import org.jetbrains.kotlin.config.IncrementalCompilation
 import org.jetbrains.kotlin.config.KotlinCompilerVersion.TEST_IS_PRE_RELEASE_SYSTEM_PROPERTY
-import org.jetbrains.kotlin.incremental.ICacheAttributesDiff
-import org.jetbrains.kotlin.incremental.CacheAttributesDiff
 import org.jetbrains.kotlin.incremental.components.LookupTracker
+import org.jetbrains.kotlin.incremental.storage.version.CacheAttributesDiff
 import org.jetbrains.kotlin.incremental.withIC
 import org.jetbrains.kotlin.jps.build.KotlinJpsBuildTest.LibraryDependency.*
 import org.jetbrains.kotlin.jps.model.kotlinCommonCompilerArguments
 import org.jetbrains.kotlin.jps.model.kotlinCompilerArguments
-import org.jetbrains.kotlin.jps.platforms.productionBuildTarget
 import org.jetbrains.kotlin.load.kotlin.PackagePartClassUtils
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.test.KotlinTestUtils
@@ -991,9 +989,8 @@ open class KotlinJpsBuildTest : AbstractKotlinJpsBuildTestCase() {
                     actual.append("\n---------\n")
                 }
 
-                override fun invalidOrUnusedCache(attributesDiff: ICacheAttributesDiff) {}
                 override fun afterBuildStarted(context: CompileContext, chunk: ModuleChunk) {}
-                override fun actionsOnCacheVersionChanged(actions: List<CacheAttributesDiff.Action>) {}
+                override fun invalidOrUnusedCache(attributesDiff: CacheAttributesDiff<*>) {}
                 override fun buildFinished(exitCode: ModuleLevelBuilder.ExitCode) {}
                 override fun markedAsDirtyBeforeRound(files: Iterable<File>) {}
                 override fun markedAsDirtyAfterRound(files: Iterable<File>) {}

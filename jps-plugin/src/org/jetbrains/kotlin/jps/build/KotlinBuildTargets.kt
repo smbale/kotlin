@@ -16,7 +16,7 @@ import org.jetbrains.jps.util.JpsPathUtil
 import org.jetbrains.kotlin.config.ApiVersion
 import org.jetbrains.kotlin.config.LanguageVersion
 import org.jetbrains.kotlin.config.TargetPlatformKind
-import org.jetbrains.kotlin.incremental.CacheStatus
+import org.jetbrains.kotlin.incremental.storage.version.CacheStatus
 import org.jetbrains.kotlin.jps.model.kotlinCompilerArguments
 import org.jetbrains.kotlin.jps.model.targetPlatform
 import org.jetbrains.kotlin.jps.platforms.KotlinCommonModuleBuildTarget
@@ -82,7 +82,7 @@ class KotlinBuildTargets internal constructor(val compileContext: CompileContext
 fun ModuleChunk.toKotlinChunk(context: CompileContext): KotlinChunk? =
     context.kotlinCompilation.getChunk(this)
 
-class KotlinChunk(val compilation: KotlinCompilation, val targets: List<KotlinModuleBuildTarget<*>>) {
+class KotlinChunk(val context: KotlinGlobalCompileContext, val targets: List<KotlinModuleBuildTarget<*>>) {
     val containsTests = targets.any { it.isTests }
 
     val representativeTarget
@@ -130,13 +130,13 @@ class KotlinChunk(val compilation: KotlinCompilation, val targets: List<KotlinMo
 
     fun buildMetaInfoFile(target: ModuleBuildTarget): File =
         File(
-            compilation.dataPaths.getTargetDataRoot(target),
+            context.dataPaths.getTargetDataRoot(target),
             representativeTarget.buildMetaInfoFileName
         )
 
     fun saveVersions() {
         targets.forEach {
-            it.initialLocalCacheAttributesDiff.saveExpectedAttributesIfNeeded()
+            it.initialLocalCacheAttributesDiff.saveExpectedIfNeeded()
         }
 
         val serializedMetaInfo = representativeTarget.buildMetaInfoFactory.serializeToString(compilerArguments)

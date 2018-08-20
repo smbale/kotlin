@@ -44,13 +44,14 @@ import org.jetbrains.jps.model.java.JpsJavaDependencyScope
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.util.JpsPathUtil
 import org.jetbrains.kotlin.config.IncrementalCompilation
-import org.jetbrains.kotlin.incremental.CacheAttributesDiff
 import org.jetbrains.kotlin.incremental.LookupSymbol
 import org.jetbrains.kotlin.incremental.isJavaFile
+import org.jetbrains.kotlin.incremental.storage.version.CacheAttributesDiff
+import org.jetbrains.kotlin.incremental.storage.version.CacheVersionManager
 import org.jetbrains.kotlin.incremental.testingUtils.*
+import org.jetbrains.kotlin.jps.incremental.CompositeLookupsCacheAttributesManager
 import org.jetbrains.kotlin.jps.incremental.getKotlinCache
 import org.jetbrains.kotlin.jps.incremental.withLookupStorage
-import org.jetbrains.kotlin.jps.platforms.kotlinBuildTargets
 import org.jetbrains.kotlin.test.KotlinTestUtils
 import org.jetbrains.kotlin.utils.Printer
 import org.jetbrains.kotlin.utils.keysToMap
@@ -83,7 +84,7 @@ abstract class AbstractIncrementalJpsTest(
     protected var mapWorkingToOriginalFile: MutableMap<File, File> = hashMapOf()
 
     // for getting kotlin platform only
-    lateinit var dummyCompileContext: CompileContext
+    lateinit var kotlinGlobalCompileContext: KotlinGlobalCompileContext
 
     protected open val buildLogFinder: BuildLogFinder
         get() = BuildLogFinder()
@@ -148,16 +149,19 @@ abstract class AbstractIncrementalJpsTest(
         projectDescriptor = createProjectDescriptor(BuildLoggingManager(logger))
 
         val lookupTracker = TestLookupTracker()
-        projectDescriptor.project.setTestingContext(TestingContext(lookupTracker, logger))
+        val testingContext = TestingContext(lookupTracker, logger)
+        projectDescriptor.project.setTestingContext(testingContext)
 
         try {
             val builder = IncProjectBuilder(projectDescriptor, BuilderRegistry.getInstance(), myBuildParams, CanceledStatus.NULL, mockConstantSearch, true)
             val buildResult = BuildResult()
             builder.addMessageHandler(buildResult)
             val finalScope = scope.build()
-            dummyCompileContext = CompileContextImpl.createContextForTests(finalScope, projectDescriptor)
 
             builder.build(finalScope, false)
+
+            // testingContext.kotlinGlobalCompileContext is initialized in KotlinGlobalCompileContext constructor
+            kotlinGlobalCompileContext = testingContext.kotlinGlobalCompileContext
 
             lookupTracker.lookups.mapTo(lookupsDuringTest) { LookupSymbol(it.name, it.scopeFqName) }
 
@@ -171,7 +175,7 @@ abstract class AbstractIncrementalJpsTest(
                 return MakeResult(logger.log + "$COMPILATION_FAILED\n" + errorMessages + "\n", true, null)
             }
             else {
-                return MakeResult(logger.log, false, createMappingsDump(projectDescriptor, dummyCompileContext))
+                return MakeResult(logger.log, false, createMappingsDump(projectDescriptor))
             }
         }
         finally {
@@ -289,20 +293,18 @@ abstract class AbstractIncrementalJpsTest(
     }
 
     private fun createMappingsDump(
-        project: ProjectDescriptor,
-        dummyCompileContext: CompileContext
-    ) = createKotlinIncrementalCacheDump(project, dummyCompileContext) + "\n\n\n" +
+        project: ProjectDescriptor
+    ) = createKotlinIncrementalCacheDump(project) + "\n\n\n" +
                 createLookupCacheDump(project) + "\n\n\n" +
                 createCommonMappingsDump(project) + "\n\n\n" +
                 createJavaMappingsDump(project)
 
     private fun createKotlinIncrementalCacheDump(
-        project: ProjectDescriptor,
-        dummyCompileContext: CompileContext
+        project: ProjectDescriptor
     ): String {
         return buildString {
             for (target in project.allModuleTargets.sortedBy { it.presentableName }) {
-                val kotlinCache = project.dataManager.getKotlinCache(dummyCompileContext.kotlinBuildTargets[target])
+                val kotlinCache = project.dataManager.getKotlinCache(kotlinGlobalCompileContext.targetsBinding[target])
                 if (kotlinCache != null) {
                     append("<target $target>\n")
                     append(kotlinCache.dump())
@@ -449,10 +451,15 @@ abstract class AbstractIncrementalJpsTest(
         private val markedDirtyBeforeRound = ArrayList<File>()
         private val markedDirtyAfterRound = ArrayList<File>()
 
-        override fun actionsOnCacheVersionChanged(actions: List<CacheAttributesDiff.Action>) {
-            if (actions.size > 1 && actions.any { it != CacheAttributesDiff.Action.DO_NOTHING }) {
-                logLine("Actions after cache changed: $actions")
+        override fun invalidOrUnusedCache(attributesDiff: CacheAttributesDiff<*>) {
+            val cacheManager = attributesDiff.manager
+            val cacheTitle = when (cacheManager) {
+                is CacheVersionManager -> "Local cache for " + cacheManager.versionFile.parentFile.path // base path will be removed in logLine
+                is CompositeLookupsCacheAttributesManager -> "Lookups cache"
+                else -> error("Unknown cache manager $cacheManager")
             }
+
+            logLine("$cacheTitle are $attributesDiff")
         }
 
         override fun markedAsDirtyBeforeRound(files: Iterable<File>) {

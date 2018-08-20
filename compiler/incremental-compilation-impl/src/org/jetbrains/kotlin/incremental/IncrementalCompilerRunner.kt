@@ -28,6 +28,8 @@ import org.jetbrains.kotlin.config.Services
 import org.jetbrains.kotlin.incremental.components.ExpectActualTracker
 import org.jetbrains.kotlin.incremental.components.LookupTracker
 import org.jetbrains.kotlin.incremental.parsing.classesFqNames
+import org.jetbrains.kotlin.incremental.storage.version.CacheVersionManager
+import org.jetbrains.kotlin.incremental.storage.version.saveIfNeeded
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.progress.CompilationCanceledStatus
 import java.io.File
@@ -39,7 +41,7 @@ abstract class IncrementalCompilerRunner<
 >(
     workingDir: File,
     cacheDirName: String,
-    protected val cachesAttributeDiffs: List<CacheAttributesDiff>,
+    protected val cachesVersionManagers: List<CacheVersionManager>,
     protected val reporter: ICReporter,
     private val buildHistoryFile: File,
         private val localStateDirs: Collection<File> = emptyList()
@@ -268,7 +270,7 @@ abstract class IncrementalCompilerRunner<
         processChangesAfterBuild(compilationMode, currentBuildInfo, dirtyData)
 
         if (exitCode == ExitCode.OK) {
-            cachesAttributeDiffs.forEach { it.saveExpectedAttributesIfNeeded() }
+            cachesVersionManagers.forEach { it.saveIfNeeded() }
         }
 
         return exitCode
