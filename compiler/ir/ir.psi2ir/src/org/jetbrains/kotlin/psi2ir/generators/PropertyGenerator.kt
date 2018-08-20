@@ -31,6 +31,7 @@ import org.jetbrains.kotlin.psi.psiUtil.startOffset
 import org.jetbrains.kotlin.psi2ir.pureEndOffsetOrUndefined
 import org.jetbrains.kotlin.psi2ir.pureStartOffsetOrUndefined
 import org.jetbrains.kotlin.resolve.BindingContext
+import org.jetbrains.kotlin.resolve.hasBackingField
 import org.jetbrains.kotlin.resolve.source.KotlinSourceElement
 
 class PropertyGenerator(declarationGenerator: DeclarationGenerator) : DeclarationGeneratorExtension(declarationGenerator) {
@@ -108,7 +109,7 @@ class PropertyGenerator(declarationGenerator: DeclarationGenerator) : Declaratio
             propertyDescriptor
         ).buildWithScope { irProperty ->
             irProperty.backingField =
-                    if (propertyDescriptor.hasBackingField())
+                    if (propertyDescriptor.hasBackingField(context.bindingContext))
                         generatePropertyBackingField(ktProperty, propertyDescriptor) { irField ->
                             ktProperty.initializer?.let { ktInitializer ->
                                 declarationGenerator.generateInitializerBody(irField.symbol, ktInitializer)
@@ -126,11 +127,11 @@ class PropertyGenerator(declarationGenerator: DeclarationGenerator) : Declaratio
         val endOffset = ktElement.pureEndOffsetOrUndefined
 
         val backingField =
-            if (propertyDescriptor.hasBackingField())
+            if (propertyDescriptor.hasBackingField(context.bindingContext))
                 context.symbolTable.declareFieldWithOverrides(
                     startOffset, endOffset, IrDeclarationOrigin.FAKE_OVERRIDE,
                     propertyDescriptor, propertyDescriptor.type.toIrType(),
-                    { it.hasBackingField() }
+                    { it.hasBackingField(context.bindingContext) }
                 )
             else
                 null
@@ -144,13 +145,6 @@ class PropertyGenerator(declarationGenerator: DeclarationGenerator) : Declaratio
             propertyDescriptor.getter?.let { FunctionGenerator(declarationGenerator).generateFakeOverrideFunction(it, ktElement) },
             propertyDescriptor.setter?.let { FunctionGenerator(declarationGenerator).generateFakeOverrideFunction(it, ktElement) }
         )
-    }
-
-    private fun PropertyDescriptor.hasBackingField(): Boolean = when {
-        kind == CallableMemberDescriptor.Kind.FAKE_OVERRIDE -> overriddenDescriptors.any { it.hasBackingField() }
-        source is KotlinSourceElement ->  get(BindingContext.BACKING_FIELD_REQUIRED, this) ?: false
-        getter != null -> false
-        else -> true
     }
 
     private fun generateGetterIfRequired(ktProperty: KtProperty, property: PropertyDescriptor): IrSimpleFunction? {
@@ -169,3 +163,4 @@ class PropertyGenerator(declarationGenerator: DeclarationGenerator) : Declaratio
         return variableDescriptor as? PropertyDescriptor ?: TODO("not a property?")
     }
 }
+
