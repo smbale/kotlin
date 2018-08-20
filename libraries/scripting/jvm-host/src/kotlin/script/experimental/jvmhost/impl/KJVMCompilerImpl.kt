@@ -36,6 +36,7 @@ import org.jetbrains.kotlin.script.KotlinScriptDefinition
 import org.jetbrains.kotlin.script.util.KotlinJars
 import java.io.File
 import java.net.URLClassLoader
+import kotlin.reflect.KClass
 import kotlin.script.experimental.api.*
 import kotlin.script.experimental.dependencies.DependenciesResolver
 import kotlin.script.experimental.host.getMergedScriptText
@@ -55,7 +56,7 @@ class KJvmCompiledScript<out ScriptBase : Any>(
     private val scriptClassFQName: String
 ) : CompiledScript<ScriptBase> {
 
-    override suspend fun instantiate(scriptEvaluationEnvironment: ScriptEvaluationEnvironment?): ResultWithDiagnostics<ScriptBase> = try {
+    override suspend fun getClass(scriptEvaluationEnvironment: ScriptEvaluationEnvironment?): ResultWithDiagnostics<KClass<*>> = try {
         val baseClassLoader = scriptEvaluationEnvironment?.get(JvmScriptEvaluationEnvironment.baseClassLoader)
             ?: Thread.currentThread().contextClassLoader
         val dependencies = definition[ScriptDefinition.dependencies]
@@ -66,9 +67,8 @@ class KJvmCompiledScript<out ScriptBase : Any>(
             else URLClassLoader(dependencies.toTypedArray(), baseClassLoader)
         val classLoader = GeneratedClassLoader(generationState.factory, classLoaderWithDeps)
 
-        val clazz = classLoader.loadClass(scriptClassFQName)
-        (clazz as? ScriptBase)?.asSuccess()
-            ?: ResultWithDiagnostics.Failure("Compiled class expected to be a subclass of the <ScriptBase>, but got ${clazz.javaClass.name}".asErrorDiagnostics())
+        val clazz = classLoader.loadClass(scriptClassFQName).kotlin
+        clazz.asSuccess()
     } catch (e: Throwable) {
         ResultWithDiagnostics.Failure(ScriptDiagnostic("Unable to instantiate class $scriptClassFQName", exception = e))
     }

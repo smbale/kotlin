@@ -26,30 +26,32 @@ open class BasicJvmScriptEvaluator : ScriptEvaluator {
         scriptEvaluationEnvironment: ScriptEvaluationEnvironment?
     ): ResultWithDiagnostics<EvaluationResult> =
         try {
-            val obj = compiledScript.instantiate(scriptEvaluationEnvironment)
-            when (obj) {
-                is ResultWithDiagnostics.Failure -> obj
+            val res = compiledScript.getClass(scriptEvaluationEnvironment)
+            when (res) {
+                is ResultWithDiagnostics.Failure -> res
                 is ResultWithDiagnostics.Success -> {
                     // in the future, when (if) we'll stop to compile everything into constructor
                     // run as SAM
                     // return res
-                    val scriptObject = obj.value
-                    if (scriptObject !is Class<*>)
-                        ResultWithDiagnostics.Failure(ScriptDiagnostic("expecting class in this implementation, got ${scriptObject?.javaClass}"))
-                    else {
-                        val receivers = scriptEvaluationEnvironment?.get(ScriptEvaluationEnvironment.implicitReceivers)
-                        val instance = if (receivers == null) {
-                            scriptObject.getConstructor().newInstance()
-                        } else {
-                            scriptObject.getConstructor(Array<Any>::class.java).newInstance(receivers.toTypedArray())
-                        }
-
-                        // TODO: fix result value
-                        ResultWithDiagnostics.Success(EvaluationResult(ResultValue.Value("", instance, ""), scriptEvaluationEnvironment))
+                    val scriptClass = res.value
+                    val args = ArrayList<Any?>()
+                    scriptEvaluationEnvironment?.get(ScriptEvaluationEnvironment.contextVariables)?.forEach {
+                        args.add(it.value)
                     }
+                    scriptEvaluationEnvironment?.get(ScriptEvaluationEnvironment.implicitReceivers)?.let {
+                        args.addAll(it)
+                    }
+                    scriptEvaluationEnvironment?.get(ScriptEvaluationEnvironment.constructorArgs)?.let {
+                        args.addAll(it)
+                    }
+                    val ctor = scriptClass.java.constructors.first()
+                    val instance = ctor.newInstance(*args.toArray())
+
+                    // TODO: fix result value
+                    ResultWithDiagnostics.Success(EvaluationResult(ResultValue.Value("", instance, ""), scriptEvaluationEnvironment))
                 }
             }
         } catch (e: Throwable) {
-            ResultWithDiagnostics.Failure(e.asDiagnostics())
+            ResultWithDiagnostics.Failure(e.asDiagnostics("Error evaluating script"))
         }
 }

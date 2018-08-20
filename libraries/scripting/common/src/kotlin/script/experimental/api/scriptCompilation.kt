@@ -5,6 +5,8 @@
 
 package kotlin.script.experimental.api
 
+import kotlin.reflect.KClass
+
 interface ScriptCompiler {
 
     suspend operator fun invoke(
@@ -18,5 +20,5 @@ interface CompiledScript<out ScriptBase : Any> {
 
     val definition: ScriptDefinition
 
-    suspend fun instantiate(scriptEvaluationEnvironment: ScriptEvaluationEnvironment?): ResultWithDiagnostics<ScriptBase>
+    suspend fun getClass(scriptEvaluationEnvironment: ScriptEvaluationEnvironment?): ResultWithDiagnostics<KClass<*>>
 }
