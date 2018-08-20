@@ -19,29 +19,32 @@ package org.jetbrains.kotlin.idea.highlighter.markers
 import com.intellij.codeInsight.daemon.impl.PsiElementListNavigator
 import com.intellij.ide.util.DefaultPsiElementCellRenderer
 import com.intellij.psi.PsiElement
-import org.jetbrains.kotlin.descriptors.MemberDescriptor
-import org.jetbrains.kotlin.idea.caches.project.implementingDescriptors
-import org.jetbrains.kotlin.idea.caches.resolve.findModuleDescriptor
 import org.jetbrains.kotlin.idea.core.toDescriptor
 import org.jetbrains.kotlin.idea.util.actualsForExpected
-import org.jetbrains.kotlin.idea.util.hasActualsFor
 import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.resolve.MultiTargetPlatform
+import org.jetbrains.kotlin.resolve.descriptorUtil.module
 import org.jetbrains.kotlin.resolve.getMultiTargetPlatform
 import java.awt.event.MouseEvent
 
 fun getPlatformActualTooltip(declaration: KtDeclaration?): String? {
-    val descriptor = declaration?.toDescriptor() as? MemberDescriptor ?: return null
-    val commonModuleDescriptor = declaration.containingKtFile.findModuleDescriptor()
+    val actualDeclarations = declaration?.actualsForExpected() ?: return null
+    if (actualDeclarations.isEmpty()) return null
 
-    val platformModulesWithActuals = commonModuleDescriptor.implementingDescriptors.filter {
-        it.hasActualsFor(descriptor)
-    }
-    if (platformModulesWithActuals.isEmpty()) return null
-
-    return platformModulesWithActuals.joinToString(prefix = "Has actuals in ") {
-        (it.getMultiTargetPlatform() as MultiTargetPlatform.Specific).platform
-    }
+    return actualDeclarations.asSequence()
+        .mapNotNull { it.toDescriptor()?.module }
+        .groupBy { it.getMultiTargetPlatform() }
+        .entries
+        .joinToString(prefix = "Has actuals in ") { (platform, modules) ->
+            when (platform) {
+                is MultiTargetPlatform.Specific ->
+                    platform.platform + if (modules.size <= 1) ""
+                    else " (x${modules.size})"
+                else ->
+                    "common code" + if (modules.size <= 1) ""
+                    else " (x${modules.size})"
+            }
+        }
 }
 
 fun navigateToPlatformActual(e: MouseEvent?, declaration: KtDeclaration?) {
