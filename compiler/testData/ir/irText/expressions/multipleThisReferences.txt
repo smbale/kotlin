@@ -99,6 +99,8 @@ FILE fqName:<root> fileName:/multipleThisReferences.kt
                         receiver: GET_VAR 'this@<no name provided>: <no name provided>' type=Host.test.<no name provided> origin=null
               PROPERTY FAKE_OVERRIDE name:x visibility:public modality:FINAL flags:val
                 FIELD FAKE_OVERRIDE name:x type:kotlin.Int visibility:public flags:final
+                  overridden:
+                    FIELD PROPERTY_BACKING_FIELD name:x type:kotlin.Int visibility:public flags:final
                 FUN FAKE_OVERRIDE name:<get-x> visibility:public modality:FINAL <> ($this:Outer.Inner) returnType:kotlin.Int flags:
                   correspondingProperty: PROPERTY FAKE_OVERRIDE name:x visibility:public modality:FINAL flags:val
                   overridden:

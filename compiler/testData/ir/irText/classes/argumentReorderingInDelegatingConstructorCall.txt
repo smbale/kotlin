@@ -59,6 +59,8 @@ FILE fqName:<root> fileName:/argumentReorderingInDelegatingConstructorCall.kt
         INSTANCE_INITIALIZER_CALL classDescriptor='Test1'
     PROPERTY FAKE_OVERRIDE name:x visibility:public modality:FINAL flags:val
       FIELD FAKE_OVERRIDE name:x type:kotlin.Int visibility:public flags:final
+        overridden:
+          FIELD PROPERTY_BACKING_FIELD name:x type:kotlin.Int visibility:public flags:final
       FUN FAKE_OVERRIDE name:<get-x> visibility:public modality:FINAL <> ($this:Base) returnType:kotlin.Int flags:
         correspondingProperty: PROPERTY FAKE_OVERRIDE name:x visibility:public modality:FINAL flags:val
         overridden:
@@ -66,6 +68,8 @@ FILE fqName:<root> fileName:/argumentReorderingInDelegatingConstructorCall.kt
         $this: VALUE_PARAMETER name:<this> type:Base flags:
     PROPERTY FAKE_OVERRIDE name:y visibility:public modality:FINAL flags:val
       FIELD FAKE_OVERRIDE name:y type:kotlin.Int visibility:public flags:final
+        overridden:
+          FIELD PROPERTY_BACKING_FIELD name:y type:kotlin.Int visibility:public flags:final
       FUN FAKE_OVERRIDE name:<get-y> visibility:public modality:FINAL <> ($this:Base) returnType:kotlin.Int flags:
         correspondingProperty: PROPERTY FAKE_OVERRIDE name:y visibility:public modality:FINAL flags:val
         overridden:
@@ -114,6 +118,8 @@ FILE fqName:<root> fileName:/argumentReorderingInDelegatingConstructorCall.kt
             yy: GET_VAR 'tmp0_yy: Int' type=kotlin.Int origin=null
     PROPERTY FAKE_OVERRIDE name:x visibility:public modality:FINAL flags:val
       FIELD FAKE_OVERRIDE name:x type:kotlin.Int visibility:public flags:final
+        overridden:
+          FIELD PROPERTY_BACKING_FIELD name:x type:kotlin.Int visibility:public flags:final
       FUN FAKE_OVERRIDE name:<get-x> visibility:public modality:FINAL <> ($this:Base) returnType:kotlin.Int flags:
         correspondingProperty: PROPERTY FAKE_OVERRIDE name:x visibility:public modality:FINAL flags:val
         overridden:
@@ -121,6 +127,8 @@ FILE fqName:<root> fileName:/argumentReorderingInDelegatingConstructorCall.kt
         $this: VALUE_PARAMETER name:<this> type:Base flags:
     PROPERTY FAKE_OVERRIDE name:y visibility:public modality:FINAL flags:val
       FIELD FAKE_OVERRIDE name:y type:kotlin.Int visibility:public flags:final
+        overridden:
+          FIELD PROPERTY_BACKING_FIELD name:y type:kotlin.Int visibility:public flags:final
       FUN FAKE_OVERRIDE name:<get-y> visibility:public modality:FINAL <> ($this:Base) returnType:kotlin.Int flags:
         correspondingProperty: PROPERTY FAKE_OVERRIDE name:y visibility:public modality:FINAL flags:val
         overridden:

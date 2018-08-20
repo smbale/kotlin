@@ -324,6 +324,8 @@ FILE fqName:<root> fileName:/enum.kt
             $this: VALUE_PARAMETER name:<this> type:kotlin.Enum<TestEnum4> flags:
         PROPERTY FAKE_OVERRIDE name:x visibility:public modality:FINAL flags:val
           FIELD FAKE_OVERRIDE name:x type:kotlin.Int visibility:public flags:final
+            overridden:
+              FIELD PROPERTY_BACKING_FIELD name:x type:kotlin.Int visibility:public flags:final
           FUN FAKE_OVERRIDE name:<get-x> visibility:public modality:FINAL <> ($this:TestEnum4) returnType:kotlin.Int flags:
             correspondingProperty: PROPERTY FAKE_OVERRIDE name:x visibility:public modality:FINAL flags:val
             overridden:
@@ -406,6 +408,8 @@ FILE fqName:<root> fileName:/enum.kt
             $this: VALUE_PARAMETER name:<this> type:kotlin.Enum<TestEnum4> flags:
         PROPERTY FAKE_OVERRIDE name:x visibility:public modality:FINAL flags:val
           FIELD FAKE_OVERRIDE name:x type:kotlin.Int visibility:public flags:final
+            overridden:
+              FIELD PROPERTY_BACKING_FIELD name:x type:kotlin.Int visibility:public flags:final
           FUN FAKE_OVERRIDE name:<get-x> visibility:public modality:FINAL <> ($this:TestEnum4) returnType:kotlin.Int flags:
             correspondingProperty: PROPERTY FAKE_OVERRIDE name:x visibility:public modality:FINAL flags:val
             overridden:
