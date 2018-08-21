@@ -2058,6 +2058,11 @@ public class BytecodeTextTestGenerated extends AbstractBytecodeTextTest {
             runTest("compiler/testData/codegen/bytecodeText/inlineClasses/checkOuterInlineFunctionCall.kt");
         }
 
+        @TestMetadata("constructorWithInlineClassParametersIsNotMangled.kt")
+        public void testConstructorWithInlineClassParametersIsNotMangled() throws Exception {
+            runTest("compiler/testData/codegen/bytecodeText/inlineClasses/constructorWithInlineClassParametersIsNotMangled.kt");
+        }
+
         @TestMetadata("functionsWithInlineClassParametersHaveStableMangledNames.kt")
         public void testFunctionsWithInlineClassParametersHaveStableMangledNames() throws Exception {
             runTest("compiler/testData/codegen/bytecodeText/inlineClasses/functionsWithInlineClassParametersHaveStableMangledNames.kt");
@@ -2116,6 +2121,11 @@ public class BytecodeTextTestGenerated extends AbstractBytecodeTextTest {
         @TestMetadata("passInlineClassesWithSpreadOperatorToVarargs.kt")
         public void testPassInlineClassesWithSpreadOperatorToVarargs() throws Exception {
             runTest("compiler/testData/codegen/bytecodeText/inlineClasses/passInlineClassesWithSpreadOperatorToVarargs.kt");
+        }
+
+        @TestMetadata("propertySetterWithInlineClassTypeArgument.kt")
+        public void testPropertySetterWithInlineClassTypeArgument() throws Exception {
+            runTest("compiler/testData/codegen/bytecodeText/inlineClasses/propertySetterWithInlineClassTypeArgument.kt");
         }
 
         @TestMetadata("skipCallToUnderlyingValueOfInlineClass.kt")

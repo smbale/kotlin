@@ -11327,6 +11327,11 @@ public class JsCodegenBoxTestGenerated extends AbstractJsCodegenBoxTest {
                 KotlinTestUtils.assertAllTestsPresentByMetadata(this.getClass(), new File("compiler/testData/codegen/box/inlineClasses/functionNameMangling"), Pattern.compile("^(.+)\\.kt$"), TargetBackend.JS, true);
             }
 
+            @TestMetadata("anonymousObjectInFunctionWithMangledName.kt")
+            public void testAnonymousObjectInFunctionWithMangledName() throws Exception {
+                runTest("compiler/testData/codegen/box/inlineClasses/functionNameMangling/anonymousObjectInFunctionWithMangledName.kt");
+            }
+
             @TestMetadata("extensionFunctionsDoNotClash.kt")
             public void testExtensionFunctionsDoNotClash() throws Exception {
                 runTest("compiler/testData/codegen/box/inlineClasses/functionNameMangling/extensionFunctionsDoNotClash.kt");
@@ -11340,6 +11345,11 @@ public class JsCodegenBoxTestGenerated extends AbstractJsCodegenBoxTest {
             @TestMetadata("genericFunctionsDoNotClash.kt")
             public void testGenericFunctionsDoNotClash() throws Exception {
                 runTest("compiler/testData/codegen/box/inlineClasses/functionNameMangling/genericFunctionsDoNotClash.kt");
+            }
+
+            @TestMetadata("localClassInFunctionWithMangledName.kt")
+            public void testLocalClassInFunctionWithMangledName() throws Exception {
+                runTest("compiler/testData/codegen/box/inlineClasses/functionNameMangling/localClassInFunctionWithMangledName.kt");
             }
 
             @TestMetadata("mangledFunctionsCanBeOverridden.kt")
@@ -11370,6 +11380,36 @@ public class JsCodegenBoxTestGenerated extends AbstractJsCodegenBoxTest {
             @TestMetadata("overridingMethodInGenericClass2.kt")
             public void testOverridingMethodInGenericClass2() throws Exception {
                 runTest("compiler/testData/codegen/box/inlineClasses/functionNameMangling/overridingMethodInGenericClass2.kt");
+            }
+
+            @TestMetadata("propertySetterWithInlineClassTypeArgument.kt")
+            public void testPropertySetterWithInlineClassTypeArgument() throws Exception {
+                runTest("compiler/testData/codegen/box/inlineClasses/functionNameMangling/propertySetterWithInlineClassTypeArgument.kt");
+            }
+
+            @TestMetadata("reflectionForFunctionWithMangledName.kt")
+            public void testReflectionForFunctionWithMangledName() throws Exception {
+                runTest("compiler/testData/codegen/box/inlineClasses/functionNameMangling/reflectionForFunctionWithMangledName.kt");
+            }
+
+            @TestMetadata("reflectionForLocalClassInFunctionWithMangledName.kt")
+            public void testReflectionForLocalClassInFunctionWithMangledName() throws Exception {
+                runTest("compiler/testData/codegen/box/inlineClasses/functionNameMangling/reflectionForLocalClassInFunctionWithMangledName.kt");
+            }
+
+            @TestMetadata("reflectionForPropertyOfInlineClassType.kt")
+            public void testReflectionForPropertyOfInlineClassType() throws Exception {
+                runTest("compiler/testData/codegen/box/inlineClasses/functionNameMangling/reflectionForPropertyOfInlineClassType.kt");
+            }
+
+            @TestMetadata("syntheticAccessorForFunctionWithMangledName.kt")
+            public void testSyntheticAccessorForFunctionWithMangledName() throws Exception {
+                runTest("compiler/testData/codegen/box/inlineClasses/functionNameMangling/syntheticAccessorForFunctionWithMangledName.kt");
+            }
+
+            @TestMetadata("syntheticAccessorsForPropertyOfInlineClassType.kt")
+            public void testSyntheticAccessorsForPropertyOfInlineClassType() throws Exception {
+                runTest("compiler/testData/codegen/box/inlineClasses/functionNameMangling/syntheticAccessorsForPropertyOfInlineClassType.kt");
             }
         }
     }
