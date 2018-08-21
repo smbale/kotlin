@@ -11,7 +11,7 @@ fun equalsWithVariables(x: Any?, y: Any?) {
 
 fun identityEqualsWithVariables(x: Any?, y: Any?) {
     contract {
-        returns() implies (x === y)
+        returns() implies (<!ERROR_IN_CONTRACT_DESCRIPTION(only equality comparisons with 'null' allowed)!>x === y<!>)
     }
 }
 
