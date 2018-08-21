@@ -83,7 +83,7 @@ abstract class AbstractIncrementalLazyCachesTest : AbstractIncrementalJpsTest() 
     private fun dumpKotlinCachesFileNames(): String {
         val sb = StringBuilder()
         val printer = Printer(sb)
-        val chunks = kotlinGlobalCompileContext.chunks
+        val chunks = kotlinCompileContext.chunks
         val dataManager = projectDescriptor.dataManager
         val paths = dataManager.dataPaths
 
@@ -91,7 +91,7 @@ abstract class AbstractIncrementalLazyCachesTest : AbstractIncrementalJpsTest() 
             printer,
             paths,
             KotlinDataContainerTarget,
-            kotlinGlobalCompileContext.lookupsCacheAttributesManager.versionManager.versionFile
+            kotlinCompileContext.lookupsCacheAttributesManager.versionManager.versionFile
         )
 
         data class TargetInChunk(val chunk: KotlinChunk, val target: KotlinModuleBuildTarget<*>)

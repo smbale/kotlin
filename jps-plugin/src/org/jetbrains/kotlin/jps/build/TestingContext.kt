@@ -42,5 +42,5 @@ class TestingContext(
     val lookupTracker: LookupTracker,
     val buildLogger: TestingBuildLogger
 ) {
-    lateinit var kotlinGlobalCompileContext: KotlinGlobalCompileContext
+    lateinit var kotlinCompileContext: KotlinCompileContext
 }

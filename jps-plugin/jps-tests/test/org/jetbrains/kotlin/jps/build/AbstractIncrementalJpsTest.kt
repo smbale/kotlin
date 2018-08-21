@@ -84,7 +84,7 @@ abstract class AbstractIncrementalJpsTest(
     protected var mapWorkingToOriginalFile: MutableMap<File, File> = hashMapOf()
 
     // for getting kotlin platform only
-    lateinit var kotlinGlobalCompileContext: KotlinGlobalCompileContext
+    lateinit var kotlinCompileContext: KotlinCompileContext
 
     protected open val buildLogFinder: BuildLogFinder
         get() = BuildLogFinder()
@@ -160,8 +160,8 @@ abstract class AbstractIncrementalJpsTest(
 
             builder.build(finalScope, false)
 
-            // testingContext.kotlinGlobalCompileContext is initialized in KotlinGlobalCompileContext constructor
-            kotlinGlobalCompileContext = testingContext.kotlinGlobalCompileContext
+            // testingContext.kotlinCompileContext is initialized in KotlinCompileContext constructor
+            kotlinCompileContext = testingContext.kotlinCompileContext
 
             lookupTracker.lookups.mapTo(lookupsDuringTest) { LookupSymbol(it.name, it.scopeFqName) }
 
@@ -304,7 +304,7 @@ abstract class AbstractIncrementalJpsTest(
     ): String {
         return buildString {
             for (target in project.allModuleTargets.sortedBy { it.presentableName }) {
-                val kotlinCache = project.dataManager.getKotlinCache(kotlinGlobalCompileContext.targetsBinding[target])
+                val kotlinCache = project.dataManager.getKotlinCache(kotlinCompileContext.targetsBinding[target])
                 if (kotlinCache != null) {
                     append("<target $target>\n")
                     append(kotlinCache.dump())

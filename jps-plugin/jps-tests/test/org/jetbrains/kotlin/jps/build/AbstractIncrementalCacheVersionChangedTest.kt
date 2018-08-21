@@ -33,7 +33,7 @@ abstract class AbstractIncrementalCacheVersionChangedTest : AbstractIncrementalJ
 
         if (modifiedFiles.none { it.endsWith("do-not-change-cache-versions") }) {
             val versions = targets.flatMap {
-                getVersionManagersToTest(kotlinGlobalCompileContext.targetsBinding[it]!!)
+                getVersionManagersToTest(kotlinCompileContext.targetsBinding[it]!!)
             }
 
             versions.forEach {

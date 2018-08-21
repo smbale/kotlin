@@ -28,7 +28,7 @@ data class CacheAttributesDiff<Attrs>(
             }
 
     fun saveExpectedIfNeeded() {
-        if (expected != actual) manager.writeActualVersion(actual)
+        if (expected != actual) manager.writeActualVersion(expected)
     }
 
     override fun toString(): String {

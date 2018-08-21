@@ -53,7 +53,7 @@ class CompositeLookupsCacheAttributesManager(
         } else {
             versionManager.writeActualVersion(CacheVersion(values.version))
 
-            if (!actualComponentsFile.exists()) actualComponentsFile.mkdirs()
+            actualComponentsFile.parentFile.mkdirs()
             actualComponentsFile.writeText(values.components.joinToString("\n"))
         }
     }

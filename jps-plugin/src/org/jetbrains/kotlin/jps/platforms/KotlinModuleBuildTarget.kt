@@ -48,8 +48,8 @@ abstract class KotlinModuleBuildTarget<BuildMetaInfoType : BuildMetaInfo>(
     val jpsModuleBuildTarget: ModuleBuildTarget
 ) {
     // TODO(1.2.80): got rid of context and replace it with kotlinContext
-    val kotlinContext: KotlinGlobalCompileContext
-        get() = context.kotlinCompilation
+    val kotlinContext: KotlinCompileContext
+        get() = context.kotlin
 
     abstract val globalLookupCacheId: String
 

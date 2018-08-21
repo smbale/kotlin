@@ -105,7 +105,7 @@ class KotlinBuilder : ModuleLevelBuilder(BuilderCategory.SOURCE_PROCESSOR) {
             LOG.info("Label in local history: $historyLabel")
         }
 
-        val kotlinContext = KotlinGlobalCompileContext(context)
+        val kotlinContext = KotlinCompileContext(context)
         context.putUserData(kotlinCompileContextKey, kotlinContext)
 
         kotlinContext.loadTargets()
@@ -117,7 +117,7 @@ class KotlinBuilder : ModuleLevelBuilder(BuilderCategory.SOURCE_PROCESSOR) {
     }
 
     override fun buildFinished(context: CompileContext) {
-        context.kotlinCompilation.dispose()
+        context.kotlin.dispose()
         context.putUserData(kotlinCompileContextKey, null)
 
         statisticsLogger.reportTotal()
@@ -133,11 +133,11 @@ class KotlinBuilder : ModuleLevelBuilder(BuilderCategory.SOURCE_PROCESSOR) {
 
         if (JavaBuilderUtil.isForcedRecompilationAllJavaModules(context)) return
 
+        val kotlinContext = context.kotlin
         val targets = chunk.targets
         val dataManager = context.projectDescriptor.dataManager
-        val hasKotlin = HasKotlinMarker(dataManager)
 
-        if (targets.none { hasKotlin[it] == true }) return
+        if (targets.none { kotlinContext.hasKotlinMarker[it] == true }) return
 
         val roundDirtyFiles = KotlinDirtySourceFilesHolder(
             chunk,
@@ -159,7 +159,7 @@ class KotlinBuilder : ModuleLevelBuilder(BuilderCategory.SOURCE_PROCESSOR) {
         } catch (e: Exception) {
             // todo: report to Intellij when IDEA-187115 is implemented
             LOG.info(e)
-            context.kotlinCompilation.markAllKotlinForRebuild("Lookup storage is corrupted")
+            context.kotlin.markAllKotlinForRebuild("Lookup storage is corrupted")
             return
         }
 
@@ -282,25 +282,24 @@ class KotlinBuilder : ModuleLevelBuilder(BuilderCategory.SOURCE_PROCESSOR) {
             return NOTHING_DONE
         }
 
+        val kotlinContext = context.kotlin
         val projectDescriptor = context.projectDescriptor
         val dataManager = projectDescriptor.dataManager
         val targets = chunk.targets
-        val hasKotlin = HasKotlinMarker(dataManager)
-        val rebuildAfterCacheVersionChanged = RebuildAfterCacheVersionChangeMarker(dataManager)
         val isChunkRebuilding = JavaBuilderUtil.isForcedRecompilationAllJavaModules(context)
-                || targets.any { rebuildAfterCacheVersionChanged[it] == true }
+                || targets.any { kotlinContext.rebuildAfterCacheVersionChanged[it] == true }
 
         if (kotlinDirtyFilesHolder.hasDirtyOrRemovedFiles) {
             if (!isChunkRebuilding && !representativeTarget.isIncrementalCompilationEnabled) {
-                targets.forEach { rebuildAfterCacheVersionChanged[it] = true }
+                targets.forEach { kotlinContext.rebuildAfterCacheVersionChanged[it] = true }
                 return CHUNK_REBUILD_REQUIRED
             }
         } else {
             if (isChunkRebuilding) {
-                targets.forEach { hasKotlin[it] = false }
+                targets.forEach { kotlinContext.hasKotlinMarker[it] = false }
             }
 
-            targets.forEach { rebuildAfterCacheVersionChanged.clean(it) }
+            targets.forEach { kotlinContext.rebuildAfterCacheVersionChanged.clean(it) }
             return NOTHING_DONE
         }
 
@@ -358,13 +357,13 @@ class KotlinBuilder : ModuleLevelBuilder(BuilderCategory.SOURCE_PROCESSOR) {
         registerOutputItems(outputConsumer, generatedFiles)
         kotlinChunk.saveVersions()
 
-        if (targets.any { hasKotlin[it] == null }) {
+        if (targets.any { kotlinContext.hasKotlinMarker[it] == null }) {
             fsOperations.markChunk(recursively = false, kotlinOnly = true, excludeFiles = kotlinDirtyFilesHolder.allDirtyFiles)
         }
 
         for (target in targets) {
-            hasKotlin[target] = true
-            rebuildAfterCacheVersionChanged.clean(target)
+            kotlinContext.hasKotlinMarker[target] = true
+            kotlinContext.rebuildAfterCacheVersionChanged.clean(target)
         }
 
         chunk.targets.forEach {

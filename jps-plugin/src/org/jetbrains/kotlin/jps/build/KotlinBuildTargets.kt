@@ -28,7 +28,7 @@ import java.io.File
 import java.util.concurrent.ConcurrentHashMap
 
 val CompileContext.kotlinBuildTargets
-    get() = kotlinCompilation.targetsBinding
+    get() = kotlin.targetsBinding
 
 class KotlinBuildTargets internal constructor(val compileContext: CompileContext) {
     private val byJpsModuleBuildTarget = ConcurrentHashMap<ModuleBuildTarget, KotlinModuleBuildTarget<*>>()
@@ -80,9 +80,9 @@ class KotlinBuildTargets internal constructor(val compileContext: CompileContext
 }
 
 fun ModuleChunk.toKotlinChunk(context: CompileContext): KotlinChunk? =
-    context.kotlinCompilation.getChunk(this)
+    context.kotlin.getChunk(this)
 
-class KotlinChunk(val context: KotlinGlobalCompileContext, val targets: List<KotlinModuleBuildTarget<*>>) {
+class KotlinChunk(val context: KotlinCompileContext, val targets: List<KotlinModuleBuildTarget<*>>) {
     val containsTests = targets.any { it.isTests }
 
     val representativeTarget
@@ -110,7 +110,8 @@ class KotlinChunk(val context: KotlinGlobalCompileContext, val targets: List<Kot
 
         targets.forEach {
             if (it.initialLocalCacheAttributesDiff.status == CacheStatus.INVALID) {
-                KotlinBuilder.LOG.debug("$it cache is invalid ${it.initialLocalCacheAttributesDiff}, rebuilding $this")
+                context.testingLogger?.invalidOrUnusedCache(it.initialLocalCacheAttributesDiff)
+                KotlinBuilder.LOG.info("$it cache is invalid ${it.initialLocalCacheAttributesDiff}, rebuilding $this")
                 return true
             }
         }

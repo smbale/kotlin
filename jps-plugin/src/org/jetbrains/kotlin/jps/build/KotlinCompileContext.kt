@@ -18,16 +18,17 @@ import org.jetbrains.kotlin.jps.incremental.CompositeLookupsCacheAttributesManag
 import org.jetbrains.kotlin.jps.incremental.KotlinDataContainerTarget
 import org.jetbrains.kotlin.jps.incremental.cleanLookupStorage
 import org.jetbrains.kotlin.jps.incremental.getKotlinCache
+import java.io.File
 
-internal val kotlinCompileContextKey = Key<KotlinGlobalCompileContext>("kotlin")
+internal val kotlinCompileContextKey = Key<KotlinCompileContext>("kotlin")
 
-val CompileContext.kotlinCompilation: KotlinGlobalCompileContext
+val CompileContext.kotlin: KotlinCompileContext
     get() = getUserData(kotlinCompileContextKey)
         ?: error("KotlinCompilation available only at build phase (between KotlinBuilder.buildStarted and KotlinBuilder.buildFinished)")
 
-class KotlinGlobalCompileContext(val context: CompileContext) {
+class KotlinCompileContext(val context: CompileContext) {
     init {
-        context.testingContext?.kotlinGlobalCompileContext = this
+        context.testingContext?.kotlinCompileContext = this
     }
 
     // TODO(1.2.80): As all targets now loaded at build start, no ConcurrentHasMap in KotlinBuildTargets needed anymore
@@ -44,6 +45,9 @@ class KotlinGlobalCompileContext(val context: CompileContext) {
     lateinit var initialLookupsCacheStateDiff: CacheAttributesDiff<*>
 
     val shouldCheckCacheVersions = System.getProperty(KotlinBuilder.SKIP_CACHE_VERSION_CHECK_PROPERTY) == null
+
+    val rebuildAfterCacheVersionChanged = RebuildAfterCacheVersionChangeMarker(dataManager)
+    val hasKotlinMarker = HasKotlinMarker(dataManager)
 
     fun loadTargets() {
         val globalCacheRootPath = dataPaths.getTargetDataRoot(KotlinDataContainerTarget)
@@ -77,7 +81,8 @@ class KotlinGlobalCompileContext(val context: CompileContext) {
             CacheStatus.INVALID -> {
                 // global cache needs to be rebuilt
                 testingLogger?.invalidOrUnusedCache(initialLookupsCacheStateDiff)
-                KotlinBuilder.LOG.debug("Global lookup map invalidated, reason: ", initialLookupsCacheStateDiff)
+
+                KotlinBuilder.LOG.info("Global lookup map are INVALID: $initialLookupsCacheStateDiff")
 
                 clearLookupCache()
                 markAllKotlinForRebuild("Kotlin incremental cache setting or format was changed")
@@ -91,10 +96,7 @@ class KotlinGlobalCompileContext(val context: CompileContext) {
             }
             CacheStatus.SHOULD_BE_CLEARED -> {
                 context.testingContext?.buildLogger?.invalidOrUnusedCache(initialLookupsCacheStateDiff)
-                KotlinBuilder.LOG.debug(
-                    "Removing global cache as it is not required anymore, reason: ",
-                    initialLookupsCacheStateDiff
-                )
+                KotlinBuilder.LOG.info("Removing global cache as it is not required anymore: $initialLookupsCacheStateDiff")
 
                 clearAllCaches()
             }
@@ -102,38 +104,30 @@ class KotlinGlobalCompileContext(val context: CompileContext) {
         }
     }
 
+    private fun logMarkDirtyForTestingBeforeRound(file: File, shouldProcess: Boolean): Boolean {
+        if (shouldProcess) {
+            testingLogger?.markedAsDirtyBeforeRound(listOf(file))
+            testingLogger?.markedAsDirtyAfterRound(listOf(file))
+        }
+        return shouldProcess
+    }
+
     fun markAllKotlinForRebuild(reason: String) {
         KotlinBuilder.LOG.info("Rebuilding all Kotlin: $reason")
 
         val dataManager = context.projectDescriptor.dataManager
-        val rebuildAfterCacheVersionChanged = RebuildAfterCacheVersionChangeMarker(dataManager)
-        val hasKotlinMarker = HasKotlinMarker(dataManager)
 
-        context.projectDescriptor.buildTargetIndex.allTargets.forEach { target ->
-            if (target is ModuleBuildTarget) {
-                val kotlinTarget = context.kotlinBuildTargets[target]!!
-
-                FSOperations.markDirty(context, CompilationRound.NEXT, target) { file ->
-                    file.isKotlinSourceFile
-                }
-
-                hasKotlinMarker.clean(target)
-                dataManager.getKotlinCache(kotlinTarget)?.clean()
-                rebuildAfterCacheVersionChanged[target] = true
-            }
+        chunks.forEach {
+            markChunkForRebuildBeforeBuild(it)
         }
 
         dataManager.cleanLookupStorage(KotlinBuilder.LOG)
     }
 
     private fun markChunkForRebuildBeforeBuild(chunk: KotlinChunk) {
-        val dataManager = context.projectDescriptor.dataManager
-        val hasKotlinMarker = HasKotlinMarker(dataManager)
-        val rebuildAfterCacheVersionChanged = RebuildAfterCacheVersionChangeMarker(dataManager)
-
         chunk.targets.forEach {
             FSOperations.markDirty(context, CompilationRound.NEXT, it.jpsModuleBuildTarget) { file ->
-                file.isKotlinSourceFile
+                logMarkDirtyForTestingBeforeRound(file, file.isKotlinSourceFile)
             }
 
             dataManager.getKotlinCache(it)?.clean()
@@ -167,6 +161,7 @@ class KotlinGlobalCompileContext(val context: CompileContext) {
                         "$target caches is cleared as not required anymore: ",
                         target.initialLocalCacheAttributesDiff
                     )
+                    testingLogger?.invalidOrUnusedCache(target.initialLocalCacheAttributesDiff)
                     dataManager.getKotlinCache(target)?.clean()
                 }
             }
